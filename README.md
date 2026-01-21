@@ -30,7 +30,7 @@ dotnet ef database update --project Infrastructure --startup-project Web.API
 - HTTPS: https://localhost:7145
 - Scalar API docs (dev): https://localhost:7145/scalar/v1
 
-## Docker Development
+### Docker Development
 
 Run the full stack (API + PostgreSQL):
 
@@ -73,6 +73,57 @@ docker compose down
 
 # Stop and remove containers + volumes (reset database)
 docker compose down -v
+```
+
+### Taskfile
+
+This solution contains a [taskfile](https://taskfile.dev/) that can shorten many of the commands:
+
+```bash
+# Build
+task build
+
+# Production build
+task build:prod
+
+# Run
+task run
+
+# Create EF migration
+task ef:migrations:add -- Initial
+
+# Apply migrations to database
+task ef:database:update
+
+# Start or Rebuild the containers after changes
+task docker:compose:up
+
+# Stop containers
+task docker:compose:down
+```
+
+You can also use task command to replace `dotnet` or `dotnet ef`:
+
+```shell
+# Run dotnet command
+task dotnet -- build
+
+# Run dotnet ef command
+task dotnet:ef -- database update --project Infrastructure --startup-project Web.API
+```
+
+> Many commands have aliases that can shorten them even more.
+>
+> `ef:database:update`'s alias is `ef:d:u`
+
+You can invoke full list of commands available by running:
+
+```shell
+task -l
+
+# OR
+
+task
 ```
 
 ## Architecture

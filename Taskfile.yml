@@ -1,0 +1,171 @@
+version: 3
+
+vars:
+  DOTNET_BIN:
+    sh: |
+      if [ "$OS" = "Windows_NT" ]; then
+        echo dotnet
+      else
+        which dotnet
+      fi
+  DOCKER_BIN:
+    sh: |
+      if [ "$OS" = "Windows_NT" ]; then
+        echo docker
+      else
+        which docker
+      fi
+
+tasks:
+  default:
+    desc: 'List all commands'
+    cmd: 'task -l'
+
+  dotnet:
+    label: 'dotnet'
+    desc: 'Runs `dotnet` command'
+    aliases:
+      - dot
+      - net
+      - d
+    cmd: '{{.DOTNET_BIN}} {{.CLI_ARGS}}'
+    silent: true
+
+  build:
+    label: 'build'
+    desc: 'Builds the solution'
+    aliases:
+      - b
+    cmd:
+      task: dotnet
+      vars: { CLI_ARGS: 'build {{.CLI_ARGS}}' }
+    silent: true
+
+  build:prod:
+    label: 'build'
+    desc: 'Builds for production'
+    aliases:
+      - b:prod
+      - b:p
+    cmd:
+      task: build
+      vars: { CLI_ARGS: '--configuration Release' }
+    silent: true
+
+  run:
+    label: 'run'
+    desc: 'Runs the app'
+    aliases:
+      - r
+    cmd:
+      task: dotnet
+      vars: { CLI_ARGS: 'run --project Web.API/Web.API.csproj' }
+    silent: true
+
+  ef:
+    label: 'ef'
+    desc: 'Runs `dotnet ef` command'
+    cmd:
+      task: dotnet
+      vars: { CLI_ARGS: 'ef {{.CLI_ARGS}}' }
+    silent: true
+
+  ef:migrations:
+    label: 'migrations'
+    desc: 'Manage migrations'
+    aliases:
+      - ef:m
+    cmd:
+      task: ef
+      vars: { CLI_ARGS: 'migrations {{.CLI_ARGS}}' }
+    silent: true
+
+  ef:migrations:add:
+    label: 'migrations:add'
+    desc: 'Generates new migration'
+    aliases:
+      - ef:migrations:new
+      - ef:migrations:a
+      - ef:m:add
+      - ef:m:a
+      - ef:m:n
+    cmd:
+      task: ef:migrations
+      vars: { CLI_ARGS: 'add {{.CLI_ARGS}} --project Infrastructure --startup-project Web.API --output-dir Data/Migrations' }
+    silent: true
+
+  ef:database:
+    label: 'database'
+    desc: 'Manage database'
+    aliases:
+      - ef:d
+    cmd:
+      task: ef
+      vars: { CLI_ARGS: 'database {{.CLI_ARGS}}' }
+    silent: true
+
+  ef:database:update:
+    label: 'database:update'
+    desc: 'Update database (apply migrations)'
+    aliases:
+      - ef:database:u
+      - ef:d:u
+      - ef:migrations:apply
+      - ef:m:apply
+      - ef:m:ap
+    cmd:
+      task: ef:database
+      vars: { CLI_ARGS: 'update --project Infrastructure --startup-project Web.API' }
+    silent: true
+
+  docker:
+    label: 'docker'
+    desc: 'Runs `docker` command'
+    cmd: '{{.DOCKER_BIN}} {{.CLI_ARGS}}'
+    silent: true
+
+  docker:compose:
+    label: 'compose'
+    desc: 'Runs `docker compose` command'
+    cmd:
+      task: docker
+      vars: { CLI_ARGS: 'compose {{.CLI_ARGS}}' }
+    silent: true
+
+  docker:compose:up:
+    label: 'compose:up'
+    desc: 'Builds and starts/restarts containers'
+    aliases:
+      - docker:compose:start
+      - docker:compose:restart
+      - docker:compose:u
+      - docker:c:up
+      - docker:c:start
+      - docker:c:restart
+      - docker:c:u
+    cmd:
+      task: docker:compose
+      vars: { CLI_ARGS: 'up --build -d' }
+    silent: true
+
+  docker:compose:down:
+    label: 'compose:down'
+    desc: 'Stops running container'
+    aliases:
+      - docker:compose:stop
+      - docker:compose:remove
+      - docker:compose:d
+      - docker:c:down
+      - docker:c:stop
+      - docker:c:remove
+      - docker:c:d
+    cmd:
+      task: docker:compose
+      vars: { CLI_ARGS: 'down {{.CLI_ARGS}}' }
+    silent: true
+
+  example:remove:
+    label: 'example:remove'
+    desc: 'Removes examples from the solution'
+    cmd: '{{.TASKFILE_DIR}}/scripts/remove-products-example.sh'
+    silent: true
