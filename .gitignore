@@ -1,0 +1,21 @@
+# >>> Editors
+.idea/
+.vs/
+riderModule.iml
+/_ReSharper.Caches/
+*.sln.DotSettings.user
+# <<< Editors
+
+# >>> Runtime
+bin/
+obj/
+/packages/
+# <<< Runtime
+
+# >>> Configurations
+appsettings*.json
+!appsettings.json
+!appsettings.Development.json
+.env*
+!.env.example
+# <<< Configurations

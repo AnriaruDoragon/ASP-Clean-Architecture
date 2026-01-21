@@ -1,0 +1,47 @@
+services:
+  # PostgreSQL 18 database
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aspcleanarchitecture
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aspclean-network
+
+  # ASP.NET Core API
+  api:
+    build:
+      context: .
+      dockerfile: Web.API/Dockerfile
+    ports:
+      - "5050:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db;Database=aspcleanarchitecture;Username=postgres;Password=postgres
+      - JWT__SECRETKEY=your-super-secret-key-that-is-at-least-32-characters-long
+      - JWT__ISSUER=ASPCleanArchitecture
+      - JWT__AUDIENCE=ASPCleanArchitecture
+      - JWT__ACCESSTOKENEXPIRATIONMINUTES=15
+      - JWT__REFRESHTOKENEXPIRATIONDAYS=7
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aspclean-network
+
+volumes:
+  postgres-data:
+
+networks:
+  aspclean-network:
+    driver: bridge
