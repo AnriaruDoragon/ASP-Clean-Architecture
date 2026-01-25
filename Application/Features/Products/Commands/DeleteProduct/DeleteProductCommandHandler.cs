@@ -22,7 +22,8 @@ public sealed class DeleteProductCommandHandler(
         if (product is null)
             return Result.Failure(Error.NotFound("Product", request.Id));
 
-        context.Products.Remove(product);
+        // Soft delete - the product will be filtered out by the global query filter
+        product.Delete();
         await context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

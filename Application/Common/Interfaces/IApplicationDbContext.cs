@@ -19,6 +19,8 @@ public interface IApplicationDbContext
     // Auth
     public DbSet<User> Users { get; }
     public DbSet<RefreshToken> RefreshTokens { get; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; }
+    public DbSet<EmailVerificationToken> EmailVerificationTokens { get; }
 
     // Example
     public DbSet<Product> Products { get; }

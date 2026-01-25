@@ -4,7 +4,7 @@ namespace Application.Common.Models;
 /// Represents an error with a code and description.
 /// Used with the Result pattern for explicit error handling.
 /// </summary>
-public sealed record Error(string Code, string Description)
+public record Error(string Code, string Description)
 {
     /// <summary>
     /// Represents no error (success state).

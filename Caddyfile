@@ -1,0 +1,9 @@
+# Local development reverse proxy
+# Access API at: https://api.localhost
+
+api.localhost {
+    reverse_proxy api:8080
+
+    # Use internal CA for local HTTPS
+    tls internal
+}

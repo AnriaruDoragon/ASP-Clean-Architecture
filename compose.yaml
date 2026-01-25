@@ -3,9 +3,9 @@ services:
   db:
     image: postgres:18-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: aspcleanarchitecture
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-aspcleanarchitecture}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
@@ -26,21 +26,65 @@ services:
     ports:
       - "5050:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db;Database=aspcleanarchitecture;Username=postgres;Password=postgres
-      - JWT__SECRETKEY=your-super-secret-key-that-is-at-least-32-characters-long
-      - JWT__ISSUER=ASPCleanArchitecture
-      - JWT__AUDIENCE=ASPCleanArchitecture
-      - JWT__ACCESSTOKENEXPIRATIONMINUTES=15
-      - JWT__REFRESHTOKENEXPIRATIONDAYS=7
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db;Database=${POSTGRES_DB:-aspcleanarchitecture};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - JWT__SECRETKEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      - JWT__ISSUER=${JWT_ISSUER:-ASPCleanArchitecture}
+      - JWT__AUDIENCE=${JWT_AUDIENCE:-ASPCleanArchitecture}
+      - JWT__ACCESSTOKENEXPIRATIONMINUTES=${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:-15}
+      - JWT__REFRESHTOKENEXPIRATIONDAYS=${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:-7}
+      - CORS__ALLOWEDORIGINS=${CORS_ALLOWED_ORIGINS:-}
+      - CACHING__ENABLED=${CACHING_ENABLED:-false}
+      - CACHING__PROVIDER=${CACHING_PROVIDER:-Memory}
+      - CACHING__REDIS__CONNECTIONSTRING=${CACHING_REDIS_CONNECTION_STRING:-redis:6379}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/live || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - aspclean-network
 
+  # Caddy reverse proxy (dev only - provides HTTPS at api.localhost)
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+    networks:
+      - aspclean-network
+    profiles:
+      - dev
+
+  # Redis (optional, for distributed caching)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - aspclean-network
+    profiles:
+      - caching
+
 volumes:
   postgres-data:
+  caddy-data:
+  caddy-config:
 
 networks:
   aspclean-network:

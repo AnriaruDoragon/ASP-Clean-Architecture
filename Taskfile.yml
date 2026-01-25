@@ -1,171 +1,221 @@
-version: 3
+version: "3"
 
 vars:
-  DOTNET_BIN:
-    sh: |
-      if [ "$OS" = "Windows_NT" ]; then
-        echo dotnet
-      else
-        which dotnet
-      fi
-  DOCKER_BIN:
-    sh: |
-      if [ "$OS" = "Windows_NT" ]; then
-        echo docker
-      else
-        which docker
-      fi
+  SOLUTION: "ASPCleanArchitecture.sln"
+  API_PROJECT: "Web.API/Web.API.csproj"
+  INFRA_PROJECT: "Infrastructure"
+  MIGRATIONS_DIR: "Data/Migrations"
+
+  # Tests
+  TEST_DOMAIN: "Tests/Domain.UnitTests"
+  TEST_APPLICATION: "Tests/Application.UnitTests"
+  TEST_INTEGRATION: "Tests/Web.API.IntegrationTests"
 
 tasks:
   default:
-    desc: 'List all commands'
-    cmd: 'task -l'
-
-  dotnet:
-    label: 'dotnet'
-    desc: 'Runs `dotnet` command'
-    aliases:
-      - dot
-      - net
-      - d
-    cmd: '{{.DOTNET_BIN}} {{.CLI_ARGS}}'
+    desc: List all commands
+    cmd: task --list-all
     silent: true
+
+  # ============================================================================
+  # .NET Commands
+  # ============================================================================
+
+  restore:
+    desc: Restore NuGet packages
+    aliases: [r]
+    cmd: dotnet restore {{.CLI_ARGS}}
 
   build:
-    label: 'build'
-    desc: 'Builds the solution'
-    aliases:
-      - b
-    cmd:
-      task: dotnet
-      vars: { CLI_ARGS: 'build {{.CLI_ARGS}}' }
-    silent: true
+    desc: Build the solution
+    aliases: [b]
+    cmd: dotnet build {{.CLI_ARGS}}
 
-  build:prod:
-    label: 'build'
-    desc: 'Builds for production'
-    aliases:
-      - b:prod
-      - b:p
-    cmd:
-      task: build
-      vars: { CLI_ARGS: '--configuration Release' }
-    silent: true
+  build:release:
+    desc: Build for production
+    aliases: [b:r, b:prod]
+    cmd: dotnet build --configuration Release {{.CLI_ARGS}}
+
+  clean:
+    desc: Clean build outputs
+    aliases: [c]
+    cmd: dotnet clean {{.CLI_ARGS}}
 
   run:
-    label: 'run'
-    desc: 'Runs the app'
-    aliases:
-      - r
-    cmd:
-      task: dotnet
-      vars: { CLI_ARGS: 'run --project Web.API/Web.API.csproj' }
-    silent: true
+    desc: Run the API
+    aliases: [start, serve]
+    cmd: dotnet run --project {{.API_PROJECT}} {{.CLI_ARGS}}
+
+  watch:
+    desc: Run with hot reload
+    aliases: [dev, w]
+    cmd: dotnet watch --project {{.API_PROJECT}} {{.CLI_ARGS}}
+
+  format:
+    desc: Format code
+    aliases: [fmt]
+    cmd: dotnet format {{.CLI_ARGS}}
+
+  format:check:
+    desc: Check code formatting
+    aliases: [fmt:check]
+    cmd: dotnet format --verify-no-changes {{.CLI_ARGS}}
+
+  # ============================================================================
+  # Testing
+  # ============================================================================
+
+  test:
+    desc: Run all tests
+    aliases: [t]
+    cmd: dotnet test {{.CLI_ARGS}}
+
+  test:unit:
+    desc: Run unit tests only
+    aliases: [t:u]
+    deps: [test:domain, test:application]
+
+  test:domain:
+    desc: Run Domain unit tests
+    aliases: [t:d]
+    cmd: dotnet test {{.TEST_DOMAIN}} {{.CLI_ARGS}}
+
+  test:application:
+    desc: Run Application unit tests
+    aliases: [t:a]
+    cmd: dotnet test {{.TEST_APPLICATION}} {{.CLI_ARGS}}
+
+  test:integration:
+    desc: Run integration tests
+    aliases: [t:i]
+    cmd: dotnet test {{.TEST_INTEGRATION}} {{.CLI_ARGS}}
+
+  test:coverage:
+    desc: Run tests with coverage
+    aliases: [t:c]
+    cmd: dotnet test --collect:"XPlat Code Coverage" {{.CLI_ARGS}}
+
+  # ============================================================================
+  # EF Core Migrations
+  # ============================================================================
 
   ef:
-    label: 'ef'
-    desc: 'Runs `dotnet ef` command'
-    cmd:
-      task: dotnet
-      vars: { CLI_ARGS: 'ef {{.CLI_ARGS}}' }
-    silent: true
+    desc: Run dotnet ef command
+    cmd: dotnet ef {{.CLI_ARGS}} --project {{.INFRA_PROJECT}} --startup-project Web.API
 
-  ef:migrations:
-    label: 'migrations'
-    desc: 'Manage migrations'
-    aliases:
-      - ef:m
-    cmd:
-      task: ef
-      vars: { CLI_ARGS: 'migrations {{.CLI_ARGS}}' }
-    silent: true
+  migration:add:
+    desc: Create a new migration
+    aliases: [ef:m:add, m:add]
+    cmd: dotnet ef migrations add {{.CLI_ARGS}} --project {{.INFRA_PROJECT}} --startup-project Web.API --output-dir {{.MIGRATIONS_DIR}}
 
-  ef:migrations:add:
-    label: 'migrations:add'
-    desc: 'Generates new migration'
-    aliases:
-      - ef:migrations:new
-      - ef:migrations:a
-      - ef:m:add
-      - ef:m:a
-      - ef:m:n
-    cmd:
-      task: ef:migrations
-      vars: { CLI_ARGS: 'add {{.CLI_ARGS}} --project Infrastructure --startup-project Web.API --output-dir Data/Migrations' }
-    silent: true
+  migration:remove:
+    desc: Remove last migration
+    aliases: [ef:m:remove, m:remove]
+    cmd: dotnet ef migrations remove --project {{.INFRA_PROJECT}} --startup-project Web.API
 
-  ef:database:
-    label: 'database'
-    desc: 'Manage database'
-    aliases:
-      - ef:d
-    cmd:
-      task: ef
-      vars: { CLI_ARGS: 'database {{.CLI_ARGS}}' }
-    silent: true
+  migration:list:
+    desc: List migrations
+    aliases: [ef:m:list, m:list]
+    cmd: dotnet ef migrations list --project {{.INFRA_PROJECT}} --startup-project Web.API
 
-  ef:database:update:
-    label: 'database:update'
-    desc: 'Update database (apply migrations)'
-    aliases:
-      - ef:database:u
-      - ef:d:u
-      - ef:migrations:apply
-      - ef:m:apply
-      - ef:m:ap
-    cmd:
-      task: ef:database
-      vars: { CLI_ARGS: 'update --project Infrastructure --startup-project Web.API' }
-    silent: true
+  db:update:
+    desc: Apply pending migrations
+    aliases: [ef:d:u, migration:apply, m:apply]
+    cmd: dotnet ef database update --project {{.INFRA_PROJECT}} --startup-project Web.API {{.CLI_ARGS}}
 
-  docker:
-    label: 'docker'
-    desc: 'Runs `docker` command'
-    cmd: '{{.DOCKER_BIN}} {{.CLI_ARGS}}'
-    silent: true
+  db:drop:
+    desc: Drop the database
+    aliases: [ef:d:drop]
+    cmd: dotnet ef database drop --project {{.INFRA_PROJECT}} --startup-project Web.API --force
 
-  docker:compose:
-    label: 'compose'
-    desc: 'Runs `docker compose` command'
-    cmd:
-      task: docker
-      vars: { CLI_ARGS: 'compose {{.CLI_ARGS}}' }
-    silent: true
+  # ============================================================================
+  # Docker
+  # ============================================================================
 
-  docker:compose:up:
-    label: 'compose:up'
-    desc: 'Builds and starts/restarts containers'
-    aliases:
-      - docker:compose:start
-      - docker:compose:restart
-      - docker:compose:u
-      - docker:c:up
-      - docker:c:start
-      - docker:c:restart
-      - docker:c:u
-    cmd:
-      task: docker:compose
-      vars: { CLI_ARGS: 'up --build -d' }
-    silent: true
+  docker:up:
+    desc: Start containers (with dev proxy & caching)
+    aliases: [up, d:up]
+    cmd: docker compose --profile dev --profile caching up --build -d {{.CLI_ARGS}}
 
-  docker:compose:down:
-    label: 'compose:down'
-    desc: 'Stops running container'
-    aliases:
-      - docker:compose:stop
-      - docker:compose:remove
-      - docker:compose:d
-      - docker:c:down
-      - docker:c:stop
-      - docker:c:remove
-      - docker:c:d
-    cmd:
-      task: docker:compose
-      vars: { CLI_ARGS: 'down {{.CLI_ARGS}}' }
-    silent: true
+  docker:up:minimal:
+    desc: Start containers (API + DB only)
+    aliases: [up:min]
+    cmd: docker compose up --build -d {{.CLI_ARGS}}
+
+  docker:down:
+    desc: Stop containers
+    aliases: [down, d:down]
+    cmd: docker compose down {{.CLI_ARGS}}
+
+  docker:reset:
+    desc: Stop containers and remove volumes
+    aliases: [d:reset]
+    cmd: docker compose down -v {{.CLI_ARGS}}
+
+  docker:logs:
+    desc: View container logs
+    aliases: [logs, d:logs]
+    cmd: docker compose logs -f {{.CLI_ARGS}}
+
+  docker:logs:api:
+    desc: View API logs
+    aliases: [logs:api]
+    cmd: docker compose logs -f api
+
+  docker:ps:
+    desc: List running containers
+    aliases: [ps, d:ps]
+    cmd: docker compose ps
+
+  docker:build:
+    desc: Build Docker image
+    aliases: [d:build]
+    cmd: docker build -t aspcleanarchitecture -f Web.API/Dockerfile .
+
+  # ============================================================================
+  # CI/CD Tasks (for GitHub Actions)
+  # ============================================================================
+
+  ci:restore:
+    desc: "[CI] Restore dependencies"
+    cmd: dotnet restore
+
+  ci:build:
+    desc: "[CI] Build for CI"
+    cmd: dotnet build --no-restore --configuration Release
+
+  ci:test:unit:
+    desc: "[CI] Run unit tests"
+    cmds:
+      - dotnet test {{.TEST_DOMAIN}} --no-build --configuration Release --verbosity normal
+      - dotnet test {{.TEST_APPLICATION}} --no-build --configuration Release --verbosity normal
+
+  ci:test:integration:
+    desc: "[CI] Run integration tests"
+    cmd: dotnet test {{.TEST_INTEGRATION}} --no-build --configuration Release --verbosity normal
+
+  ci:format:
+    desc: "[CI] Check formatting"
+    cmd: dotnet format --verify-no-changes
+
+  # ============================================================================
+  # Utilities
+  # ============================================================================
 
   example:remove:
-    label: 'example:remove'
-    desc: 'Removes examples from the solution'
-    cmd: '{{.TASKFILE_DIR}}/scripts/remove-products-example.sh'
-    silent: true
+    desc: Remove Products example from solution
+    platforms: [linux, darwin]
+    cmd: ./scripts/remove-products-example.sh
+
+  example:remove:windows:
+    desc: Remove Products example from solution (Windows)
+    platforms: [windows]
+    cmd: powershell -ExecutionPolicy Bypass -File scripts/remove-products-example.ps1
+
+  info:
+    desc: Show environment info
+    cmds:
+      - dotnet --info
+      - echo "---"
+      - docker --version
+      - docker compose version

@@ -32,8 +32,17 @@ dotnet ef database update --project Infrastructure --startup-project Web.API
 
 ### Docker Development
 
-Run the full stack (API + PostgreSQL):
+**First-time setup** - create a `.env` file with required secrets:
+```bash
+# Copy the example and edit
+cp .env.example .env
 
+# Required variables
+POSTGRES_PASSWORD=your-secure-password
+JWT_SECRET_KEY=your-secret-key-at-least-32-characters
+```
+
+Run the full stack (API + PostgreSQL):
 ```bash
 docker compose up
 ```
@@ -42,17 +51,15 @@ docker compose up
 - API: http://localhost:5050
 - Scalar API docs: http://localhost:5050/scalar/v1
 - PostgreSQL: localhost:5432
-
-**Connection String (for Docker):**
-```
-Host=db;Database=aspcleanarchitecture;Username=postgres;Password=postgres
-```
+- Health check: http://localhost:5050/health/ready
 
 **Services included:**
 - **PostgreSQL 18** - Database
 - **API** - ASP.NET Core application
+- **Caddy** (dev profile) - Reverse proxy with HTTPS at `https://api.localhost`
+- **Redis** (caching profile) - Distributed caching
 
-**First-time setup** (create database tables):
+**First-time database setup** (create tables):
 ```bash
 dotnet ef database update --project Infrastructure --startup-project Web.API
 ```
@@ -61,6 +68,15 @@ dotnet ef database update --project Infrastructure --startup-project Web.API
 ```bash
 # Start in detached mode
 docker compose up -d
+
+# Start with HTTPS proxy (https://api.localhost)
+docker compose --profile dev up -d
+
+# Start with Redis caching
+docker compose --profile caching up -d
+
+# Start with both proxy and caching
+docker compose --profile dev --profile caching up -d
 
 # View logs
 docker compose logs -f api
@@ -75,55 +91,49 @@ docker compose down
 docker compose down -v
 ```
 
+**Environment Variables:**
+See `.env.example` for all available variables. Required variables will cause Docker Compose to fail with a clear error if not set.
+
 ### Taskfile
 
-This solution contains a [taskfile](https://taskfile.dev/) that can shorten many of the commands:
+This project uses [Taskfile](https://taskfile.dev/) for common development commands:
 
 ```bash
-# Build
-task build
+# .NET Commands
+task build              # Build solution (alias: b)
+task build:release      # Build for production (alias: b:r, b:prod)
+task run                # Run the API (alias: start, serve)
+task watch              # Run with hot reload (alias: dev, w)
+task format             # Format code (alias: fmt)
 
-# Production build
-task build:prod
+# Testing
+task test               # Run all tests (alias: t)
+task test:unit          # Run unit tests only (alias: t:u)
+task test:integration   # Run integration tests (alias: t:i)
+task test:coverage      # Run tests with coverage (alias: t:c)
 
-# Run
-task run
+# EF Core Migrations
+task migration:add -- Name    # Create migration (alias: m:add)
+task migration:list           # List migrations (alias: m:list)
+task db:update                # Apply migrations (alias: m:apply)
+task db:drop                  # Drop database
 
-# Create EF migration
-task ef:migrations:add -- Initial
+# Docker
+task docker:up          # Start with dev proxy & caching (alias: up)
+task docker:up:minimal  # Start API + DB only (alias: up:min)
+task docker:down        # Stop containers (alias: down)
+task docker:reset       # Stop and remove volumes
+task docker:logs        # View all logs (alias: logs)
+task docker:logs:api    # View API logs only
 
-# Apply migrations to database
-task ef:database:update
-
-# Start or Rebuild the containers after changes
-task docker:compose:up
-
-# Stop containers
-task docker:compose:down
+# Raw dotnet ef access
+task ef -- migrations list    # Run any dotnet ef command
 ```
 
-You can also use task command to replace `dotnet` or `dotnet ef`:
+View all available commands:
 
-```shell
-# Run dotnet command
-task dotnet -- build
-
-# Run dotnet ef command
-task dotnet:ef -- database update --project Infrastructure --startup-project Web.API
-```
-
-> Many commands have aliases that can shorten them even more.
->
-> `ef:database:update`'s alias is `ef:d:u`
-
-You can invoke full list of commands available by running:
-
-```shell
-task -l
-
-# OR
-
-task
+```bash
+task --list-all   # Or just: task
 ```
 
 ## Architecture
@@ -159,6 +169,7 @@ Base classes for entities:
 **Pipeline Behaviors:**
 - `ValidationBehavior` - Auto-validates requests via FluentValidation
 - `LoggingBehavior` - Logs request execution and timing
+- `CachingBehavior` - Caches query results for `ICacheableQuery` implementations
 
 **Interfaces defined here, implemented in Infrastructure:**
 - `IRepository<T>` - Generic repository for aggregate roots
@@ -195,10 +206,15 @@ Base classes for entities:
 A complete example demonstrating all patterns is included:
 
 - **Entity**: `Domain/Entities/Product.cs` - rich domain model with business logic
-- **Events**: `Domain/Events/ProductCreatedEvent.cs`, `ProductOutOfStockEvent.cs`
+- **Events**: `Domain/Events/ProductCreatedEvent.cs`, `ProductOutOfStockEvent.cs`, `ProductDeletedEvent.cs`
 - **CQRS**: `Application/Features/Products/` - commands, queries, handlers, validators
 - **EF Config**: `Infrastructure/Data/Configs/ProductConfiguration.cs`
 - **Controller**: `Web.API/Controllers/V1/ProductsController.cs` - full CRUD API
+
+**Patterns demonstrated:**
+- **Soft Delete**: Products use soft delete with `IsDeleted` and `DeletedAt` fields, filtered by global query filter
+- **Optimistic Concurrency**: `RowVersion` column prevents concurrent update conflicts
+- **Domain Events**: Events dispatched after successful database save
 
 Use this as a reference when adding new features.
 
@@ -304,6 +320,282 @@ app.MapControllers();
 | `/scalar/v1`              | Scalar interactive documentation UI |
 
 For complete documentation including configuration options, version statuses, lifecycle headers, and advanced usage, see **[Common.ApiVersioning/README.md](Common.ApiVersioning/README.md)**.
+
+## Health Checks
+
+Health check endpoints for monitoring and orchestration:
+
+| Endpoint        | Description                                    |
+|-----------------|------------------------------------------------|
+| `/health/live`  | Liveness probe - is the app running?           |
+| `/health/ready` | Readiness probe - is the app ready for traffic?|
+
+The readiness check includes database connectivity. Responses use the standard health check UI format.
+
+```bash
+# Check if API is ready
+curl http://localhost:5050/health/ready
+```
+
+## Observability
+
+### Serilog Structured Logging
+
+Serilog is configured for structured logging with console output. Configure log levels via `appsettings.json`:
+
+```json
+"Serilog": {
+  "MinimumLevel": {
+    "Default": "Information",
+    "Override": {
+      "Microsoft": "Warning",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+```
+
+### Correlation ID
+
+Every request is assigned a unique correlation ID for distributed tracing:
+
+- **Header**: `X-Correlation-ID`
+- Reads from request header or generates new GUID
+- Included in all logs via Serilog LogContext
+- Returned in response headers
+- Included in error responses (ProblemDetails)
+
+```bash
+# Pass a correlation ID
+curl -H "X-Correlation-ID: my-trace-123" http://localhost:5050/Products
+```
+
+### Request Logging
+
+Debug-level logging of HTTP requests and responses. Automatically:
+- Logs request method, path, and sanitized headers
+- Logs response status code and timing
+- Excludes health check endpoints
+- Redacts sensitive headers (Authorization, Cookie, API keys)
+
+Enable by setting Serilog minimum level to `Debug` in development.
+
+### OpenTelemetry (Recommended)
+
+For production observability, add OpenTelemetry instrumentation:
+
+```xml
+<!-- Web.API.csproj -->
+<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.11.2" />
+<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.1" />
+<PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.10.0-beta.1" />
+<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.2" />
+```
+
+See [OpenTelemetry .NET documentation](https://opentelemetry.io/docs/languages/net/) for setup.
+
+## Rate Limiting
+
+Built-in rate limiting protects against abuse:
+
+**Configuration (`appsettings.json`):**
+```json
+"RateLimiting": {
+  "Global": { "PermitLimit": 100, "WindowMinutes": 1 },
+  "Api": { "PermitLimit": 30, "WindowMinutes": 1 }
+}
+```
+
+- **Global limiter**: Applies to all requests per IP
+- **Api limiter**: Apply to specific endpoints with `[EnableRateLimiting("Api")]`
+
+When rate limited, returns `429 Too Many Requests`.
+
+## CORS Configuration
+
+Configure allowed origins in `appsettings.json`:
+
+```json
+"Cors": {
+  "AllowedOrigins": ["https://yourdomain.com", "https://*.yourdomain.com"]
+}
+```
+
+Or via environment variable:
+```bash
+CORS__ALLOWEDORIGINS=https://yourdomain.com,https://*.yourdomain.com
+```
+
+**Wildcard Support:**
+- Use `*` for subdomain wildcards: `https://*.example.com`
+- Matches any subdomain: `https://app.example.com`, `https://api.example.com`
+
+**Behavior:**
+- With origins configured: Strict CORS with credentials support
+- In Development without origins: Allow any origin (no credentials)
+
+## Caching
+
+Optional response caching with Memory or Redis backends.
+
+**Configuration (`appsettings.json`):**
+```json
+"Caching": {
+  "Enabled": false,
+  "Provider": "Memory",
+  "Redis": {
+    "ConnectionString": "localhost:6379"
+  },
+  "DefaultExpirationMinutes": 5
+}
+```
+
+**Providers:**
+- `Memory` - In-process memory cache (default)
+- `Redis` - Distributed Redis cache
+- `None` / disabled - No-op (zero overhead)
+
+**Usage in queries:**
+```csharp
+public sealed record GetProductByIdQuery(Guid Id)
+    : IQuery<ProductDto>, ICacheableQuery
+{
+    public string CacheKey => $"products:{Id}";
+}
+```
+
+Implement `ICacheableQuery` to enable automatic caching via `CachingBehavior`.
+
+**Docker with Redis:**
+```bash
+# Start with Redis profile
+docker compose --profile caching up
+```
+
+## Background Jobs
+
+Abstraction for background job processing with pluggable providers.
+
+**Configuration (`appsettings.json`):**
+```json
+"BackgroundJobs": {
+  "Provider": "Instant"
+}
+```
+
+**Providers:**
+- `Instant` - Fire-and-forget after response (default, good for dev)
+- `Memory` - In-memory queue with background worker
+- `None` - Disabled, jobs are dropped
+
+**Usage:**
+```csharp
+public class MyHandler(IBackgroundJobService jobs)
+{
+    public async Task Handle(...)
+    {
+        // Job runs after response is sent
+        await jobs.EnqueueAsync(new SendWelcomeEmailCommand(userId));
+        await jobs.ScheduleAsync(new CleanupCommand(), TimeSpan.FromHours(1));
+    }
+}
+```
+
+**Production: Hangfire with Redis**
+
+For production workloads, replace the built-in providers with [Hangfire](https://www.hangfire.io/):
+
+```bash
+dotnet add Web.API package Hangfire.AspNetCore
+dotnet add Web.API package Hangfire.Redis.StackExchange
+```
+
+```csharp
+// Program.cs
+builder.Services.AddHangfire(config => config
+    .UseRedisStorage(builder.Configuration.GetConnectionString("Redis")));
+builder.Services.AddHangfireServer();
+
+// Usage - same interface, production-ready
+BackgroundJob.Enqueue(() => SendEmail(userId));
+```
+
+Benefits: persistence, retries, dashboard, distributed workers, scheduled jobs.
+
+**Other options:**
+- [Quartz.NET](https://www.quartz-scheduler.net/) - Enterprise cron-style scheduling
+- Message queues (RabbitMQ, Azure Service Bus) - For distributed/microservice scenarios
+
+## Domain Events
+
+Domain events allow entities to announce business-significant occurrences without coupling to handlers.
+
+**Flow:**
+1. Entity raises event: `AddDomainEvent(new ProductCreatedEvent(...))`
+2. Events stored in entity until `SaveChangesAsync()`
+3. Events collected before save, dispatched via MediatR **after successful save**
+
+This ensures data consistency - events are only dispatched after the database transaction commits.
+
+**Creating a new event:**
+
+1. Define event in `Domain/Events/`:
+```csharp
+public sealed record OrderShippedEvent(Guid OrderId) : IDomainEvent
+{
+    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+}
+```
+
+2. Raise from entity:
+```csharp
+public void Ship()
+{
+    Status = OrderStatus.Shipped;
+    AddDomainEvent(new OrderShippedEvent(Id));
+}
+```
+
+3. Create handler in `Application/Features/<Feature>/Events/`:
+```csharp
+public sealed class OrderShippedEventHandler
+    : INotificationHandler<DomainEventNotification<OrderShippedEvent>>
+{
+    public Task Handle(DomainEventNotification<OrderShippedEvent> notification,
+        CancellationToken cancellationToken)
+    {
+        // Send email, update external systems, etc.
+        return Task.CompletedTask;
+    }
+}
+```
+
+**Use cases:** Audit logging, email notifications, cache invalidation, search index updates, message queue publishing.
+
+## Testing
+
+Three test projects are included:
+
+```
+Tests/
+├── Domain.UnitTests/           # Domain entity tests
+├── Application.UnitTests/      # Handler and validator tests
+└── Web.API.IntegrationTests/   # API integration tests with Testcontainers
+```
+
+**Run all tests:**
+```bash
+dotnet test
+```
+
+**Run specific project:**
+```bash
+dotnet test Tests/Domain.UnitTests
+dotnet test Tests/Application.UnitTests
+dotnet test Tests/Web.API.IntegrationTests
+```
+
+**Integration tests** use [Testcontainers](https://testcontainers.com/) to spin up a real PostgreSQL database. Docker must be running.
 
 ## Key Patterns
 

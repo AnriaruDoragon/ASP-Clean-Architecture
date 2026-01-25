@@ -1,8 +1,11 @@
 using System.Text;
 using Application.Common.Interfaces;
 using Infrastructure.Auth;
+using Infrastructure.BackgroundJobs;
+using Infrastructure.Caching;
 using Infrastructure.Data;
 using Infrastructure.Data.Interceptors;
+using Infrastructure.Events;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +13,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 namespace Infrastructure;
 
@@ -54,14 +58,83 @@ public static class DependencyInjection
 
         // Register services
         services.AddScoped<IDateTimeProvider, DateTimeProvider>();
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         // Register Auth services
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddSingleton<IJwtService, JwtService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
+        // Register Health Checks
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            services.AddHealthChecks()
+                .AddNpgSql(connectionString, name: "database", tags: ["ready"]);
+        }
+        else
+        {
+            services.AddHealthChecks();
+        }
+
+        // Register Caching
+        services.Configure<CacheSettings>(configuration.GetSection(CacheSettings.SectionName));
+        var cacheSettings = configuration.GetSection(CacheSettings.SectionName).Get<CacheSettings>();
+
+        if (cacheSettings?.Enabled == true)
+        {
+            switch (cacheSettings.Provider.ToLowerInvariant())
+            {
+                case "redis":
+                    services.AddSingleton<IConnectionMultiplexer>(_ =>
+                        ConnectionMultiplexer.Connect(cacheSettings.Redis.ConnectionString));
+                    services.AddSingleton<ICacheService, RedisCacheService>();
+                    break;
+
+                case "memory":
+                    services.AddMemoryCache();
+                    services.AddSingleton<ICacheService, MemoryCacheService>();
+                    break;
+
+                default:
+                    services.AddSingleton<ICacheService, NullCacheService>();
+                    break;
+            }
+        }
+        else
+        {
+            services.AddSingleton<ICacheService, NullCacheService>();
+        }
+
+        // Register Email service (placeholder - implement for production)
+        services.AddSingleton<IEmailService, NullEmailService>();
+
+        // Register Background Jobs
+        services.Configure<BackgroundJobSettings>(configuration.GetSection(BackgroundJobSettings.SectionName));
+        var jobSettings = configuration.GetSection(BackgroundJobSettings.SectionName).Get<BackgroundJobSettings>()
+            ?? new BackgroundJobSettings();
+
+        switch (jobSettings.Provider)
+        {
+            case BackgroundJobProvider.Memory:
+                var inMemoryService = new InMemoryJobService(
+                    Microsoft.Extensions.Logging.Abstractions.NullLogger<InMemoryJobService>.Instance);
+                services.AddSingleton(inMemoryService);
+                services.AddSingleton<IBackgroundJobService>(inMemoryService);
+                services.AddHostedService<BackgroundJobWorker>();
+                break;
+
+            case BackgroundJobProvider.None:
+                services.AddSingleton<IBackgroundJobService, NullJobService>();
+                break;
+
+            case BackgroundJobProvider.Instant:
+            default:
+                services.AddSingleton<IBackgroundJobService, InstantJobService>();
+                break;
+        }
+
         // Configure JWT authentication
-        var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
+        JwtSettings? jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
         if (jwtSettings is not null)
         {
             services.AddAuthentication(options =>

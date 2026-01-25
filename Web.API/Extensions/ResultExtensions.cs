@@ -28,6 +28,26 @@ public static class ResultExtensions
 
     private static IActionResult ToProblemDetails(Error error)
     {
+        // Handle validation errors with field-level details
+        if (error is ValidationError validationError)
+        {
+            var validationProblemDetails = new ValidationProblemDetails(
+                validationError.Errors.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value))
+            {
+                Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                Title = "One or more validation errors occurred.",
+                Status = StatusCodes.Status400BadRequest
+            };
+
+            return new ObjectResult(validationProblemDetails)
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                ContentTypes = { "application/problem+json" }
+            };
+        }
+
         int statusCode = error.Code switch
         {
             "Error.NotFound" => StatusCodes.Status404NotFound,

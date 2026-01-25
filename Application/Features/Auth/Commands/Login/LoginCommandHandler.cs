@@ -17,7 +17,7 @@ public sealed class LoginCommandHandler(
         CancellationToken cancellationToken)
     {
         // Find user by email
-        var user = await context.Users
+        User? user = await context.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email.ToLowerInvariant(), cancellationToken);
 
         if (user is null)

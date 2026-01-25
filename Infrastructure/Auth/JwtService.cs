@@ -26,11 +26,11 @@ public sealed class JwtService(IOptions<JwtSettings> options) : IJwtService
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         // Only include user ID - authorization is checked against DB
-        Claim[] claims = new[]
-        {
+        Claim[] claims =
+        [
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        ];
 
         var token = new JwtSecurityToken(
             issuer: _settings.Issuer,
@@ -79,7 +79,7 @@ public sealed class JwtService(IOptions<JwtSettings> options) : IJwtService
             Claim? userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)
                                  ?? principal.FindFirst(JwtRegisteredClaimNames.Sub);
 
-            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
                 return null;
 
             return userId;

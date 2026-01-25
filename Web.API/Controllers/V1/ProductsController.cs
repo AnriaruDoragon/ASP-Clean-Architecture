@@ -7,6 +7,7 @@ using Application.Features.Products.Queries.GetProductById;
 using Application.Features.Products.Queries.GetProducts;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Web.API.Extensions;
 
 namespace Web.API.Controllers.V1;
@@ -16,6 +17,8 @@ namespace Web.API.Controllers.V1;
 /// </summary>
 [ApiController]
 [Route("[controller]")]
+[EnableRateLimiting("endpoint")]
+[RateLimit("Api", Per.User)]
 public class ProductsController(ISender sender) : ControllerBase
 {
     /// <summary>

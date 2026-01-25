@@ -34,13 +34,19 @@ public class GlobalExceptionHandlerMiddleware(
             _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
         };
 
+        string correlationId = context.Items["CorrelationId"]?.ToString() ?? context.TraceIdentifier;
+
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
             Title = title,
             Detail = exception.Message,
             Instance = context.Request.Path,
-            Extensions = { ["traceId"] = context.TraceIdentifier }
+            Extensions =
+            {
+                ["traceId"] = context.TraceIdentifier,
+                ["correlationId"] = correlationId
+            }
         };
 
         context.Response.ContentType = "application/problem+json";

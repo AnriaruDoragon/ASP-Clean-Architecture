@@ -21,6 +21,9 @@ namespace Infrastructure.Data.Migrations
                     Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     StockQuantity = table.Column<int>(type: "integer", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -35,6 +38,11 @@ namespace Infrastructure.Data.Migrations
                 name: "IX_Products_IsActive",
                 table: "Products",
                 column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_IsDeleted",
+                table: "Products",
+                column: "IsDeleted");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_Name",

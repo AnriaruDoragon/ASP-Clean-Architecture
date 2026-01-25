@@ -19,7 +19,7 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
+        string requestName = typeof(TRequest).Name;
 
         logger.LogInformation("Handling {RequestName}", requestName);
 

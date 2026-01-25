@@ -35,12 +35,10 @@ public class Result
 /// <typeparam name="TValue">The type of the value.</typeparam>
 public class Result<TValue> : Result
 {
-    private readonly TValue? _value;
-
     protected internal Result(TValue? value, bool isSuccess, Error error)
         : base(isSuccess, error)
     {
-        _value = value;
+        Value = value;
     }
 
     /// <summary>
@@ -48,7 +46,7 @@ public class Result<TValue> : Result
     /// Throws if the result is a failure.
     /// </summary>
     public TValue Value => IsSuccess
-        ? _value!
+        ? field!
         : throw new InvalidOperationException("Cannot access value of a failed result.");
 
     public static implicit operator Result<TValue>(TValue? value) =>

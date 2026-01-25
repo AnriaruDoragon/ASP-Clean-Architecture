@@ -32,11 +32,11 @@ public sealed class LogoutCommandHandler(
         else
         {
             // Revoke all sessions (logout from all devices)
-            var activeTokens = await context.RefreshTokens
+            List<Domain.Entities.RefreshToken> activeTokens = await context.RefreshTokens
                 .Where(rt => rt.UserId == userId && !rt.IsRevoked)
                 .ToListAsync(cancellationToken);
 
-            foreach (var token in activeTokens)
+            foreach (Domain.Entities.RefreshToken token in activeTokens)
             {
                 token.Revoke();
             }

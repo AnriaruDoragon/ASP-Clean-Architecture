@@ -10,12 +10,28 @@ namespace Infrastructure.Data;
 /// Application database context.
 /// Add DbSet properties for your entities here.
 /// </summary>
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : DbContext(options), IApplicationDbContext, IUnitOfWork
+public class ApplicationDbContext : DbContext, IApplicationDbContext, IUnitOfWork
 {
+    private readonly IDomainEventDispatcher? _domainEventDispatcher;
+
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
+    {
+    }
+
+    public ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        IDomainEventDispatcher domainEventDispatcher)
+        : base(options)
+    {
+        _domainEventDispatcher = domainEventDispatcher;
+    }
+
     // Auth
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
 
     // Example
     public DbSet<Product> Products => Set<Product>();
@@ -30,13 +46,19 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Dispatch domain events before saving
-        await DispatchDomainEventsAsync(cancellationToken);
+        // Collect domain events BEFORE saving (entities may be detached after save)
+        List<IDomainEvent> domainEvents = CollectDomainEvents();
 
-        return await base.SaveChangesAsync(cancellationToken);
+        // Save changes first
+        int result = await base.SaveChangesAsync(cancellationToken);
+
+        // Dispatch events AFTER successful save to ensure data consistency
+        await DispatchDomainEventsAsync(domainEvents, cancellationToken);
+
+        return result;
     }
 
-    private async Task DispatchDomainEventsAsync(CancellationToken cancellationToken)
+    private List<IDomainEvent> CollectDomainEvents()
     {
         var entities = ChangeTracker
             .Entries<BaseEntity>()
@@ -50,8 +72,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         entities.ForEach(e => e.ClearDomainEvents());
 
-        // Domain events will be dispatched via MediatR once configured
-        // For now, this is a placeholder for the event dispatch logic
-        await Task.CompletedTask;
+        return domainEvents;
+    }
+
+    private async Task DispatchDomainEventsAsync(List<IDomainEvent> domainEvents, CancellationToken cancellationToken)
+    {
+        if (_domainEventDispatcher is not null && domainEvents.Count > 0)
+        {
+            await _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+        }
     }
 }

@@ -15,6 +15,13 @@ public class Product : AuditableEntity, IAggregateRoot
     public int StockQuantity { get; private set; }
     public bool IsActive { get; private set; }
 
+    // Soft delete
+    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
+
+    // Optimistic concurrency
+    public byte[] RowVersion { get; private set; } = [];
+
     // Private constructor for EF Core
     private Product() { }
 
@@ -87,4 +94,26 @@ public class Product : AuditableEntity, IAggregateRoot
     /// Activates the product.
     /// </summary>
     public void Activate() => IsActive = true;
+
+    /// <summary>
+    /// Soft deletes the product.
+    /// </summary>
+    public void Delete()
+    {
+        if (IsDeleted)
+            return;
+
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
+        AddDomainEvent(new ProductDeletedEvent(Id, Name));
+    }
+
+    /// <summary>
+    /// Restores a soft-deleted product.
+    /// </summary>
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAt = null;
+    }
 }

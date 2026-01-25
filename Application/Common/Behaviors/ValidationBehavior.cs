@@ -38,16 +38,21 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
         if (failures.Count == 0)
             return await next();
 
-        // Combine all validation errors into a single message
-        string errorMessage = string.Join("; ", failures.Select(f => f.ErrorMessage));
+        // Group validation failures by property name
+        var errorsDictionary = failures
+            .GroupBy(f => f.PropertyName)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(f => f.ErrorMessage).ToArray());
+
+        var validationError = ValidationError.FromDictionary(errorsDictionary);
 
         // Create a failure result - we need to handle both Result and Result<T>
-        return CreateValidationFailureResult(errorMessage);
+        return CreateValidationFailureResult(validationError);
     }
 
-    private static TResponse CreateValidationFailureResult(string errorMessage)
+    private static TResponse CreateValidationFailureResult(Error error)
     {
-        var error = Error.Validation(errorMessage);
 
         // Check if TResponse is Result<T> or just Result
         if (typeof(TResponse) == typeof(Result))
