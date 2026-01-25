@@ -27,7 +27,9 @@ jobs:
 
       # TODO: Add your deployment steps here. Examples:
       #
+      # =====================================================================
       # Docker Registry (GHCR):
+      # =====================================================================
       # - uses: docker/setup-buildx-action@v3
       # - uses: docker/login-action@v3
       #   with:
@@ -39,13 +41,17 @@ jobs:
       #     push: true
       #     tags: ghcr.io/${{ github.repository }}:latest
       #
+      # =====================================================================
       # Azure Web App:
+      # =====================================================================
       # - uses: azure/webapps-deploy@v3
       #   with:
       #     app-name: your-app-name
       #     publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
       #
-      # AWS ECS:
+      # =====================================================================
+      # AWS ECS (Container):
+      # =====================================================================
       # - uses: aws-actions/configure-aws-credentials@v4
       #   with:
       #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -53,7 +59,36 @@ jobs:
       #     aws-region: us-east-1
       # - run: aws ecs update-service --cluster your-cluster --service your-service --force-new-deployment
       #
+      # =====================================================================
+      # EC2/VM (Self-contained .NET):
+      # =====================================================================
+      # - uses: actions/setup-dotnet@v4
+      #   with:
+      #     dotnet-version: '10.0.x'
+      # - name: Build deployment package
+      #   run: |
+      #     dotnet publish Web.API/Web.API.csproj \
+      #       -c Release -o ./publish --self-contained -r linux-x64
+      # - name: Create tarball
+      #   run: tar -czvf aspclean.tar.gz -C ./publish .
+      # - name: Deploy to EC2
+      #   env:
+      #     EC2_HOST: ${{ secrets.EC2_HOST }}
+      #     EC2_USER: ${{ secrets.EC2_USER }}
+      #     SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      #   run: |
+      #     echo "$SSH_KEY" > key.pem && chmod 600 key.pem
+      #     scp -i key.pem -o StrictHostKeyChecking=no aspclean.tar.gz $EC2_USER@$EC2_HOST:/tmp/
+      #     ssh -i key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+      #       sudo systemctl stop aspclean || true
+      #       sudo mkdir -p /opt/aspclean
+      #       sudo tar -xzf /tmp/aspclean.tar.gz -C /opt/aspclean
+      #       sudo systemctl start aspclean
+      #     EOF
+      #
+      # =====================================================================
       # Kubernetes:
+      # =====================================================================
       # - uses: azure/k8s-set-context@v4
       #   with:
       #     kubeconfig: ${{ secrets.KUBE_CONFIG }}

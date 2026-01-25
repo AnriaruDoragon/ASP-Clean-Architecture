@@ -1,0 +1,37 @@
+# Traefik Dynamic Configuration
+# Routes traffic to host machine when API runs locally (default profile)
+#
+# When the api-dev container is running (full profile), its Docker labels
+# will take precedence over this file-based configuration.
+
+http:
+  routers:
+    # Route to host machine (default profile - IDE development)
+    api-host:
+      rule: "Host(`api.aspclean.localhost`)"
+      entryPoints:
+        - websecure
+      service: api-host
+      tls: {}
+      # Lower priority than Docker-discovered services
+      # When api-dev container runs, its labels take precedence
+      priority: 1
+
+  services:
+    api-host:
+      loadBalancer:
+        servers:
+          # Points to host machine where dotnet is running
+          # host.docker.internal works on Windows/Mac
+          # On Linux, requires extra_hosts in compose.yaml
+          # Port 5141 - must match launchSettings.json
+          - url: "http://host.docker.internal:5141"
+        healthCheck:
+          path: /health/live
+          interval: "10s"
+          timeout: "3s"
+
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/aspclean.localhost.pem
+      keyFile: /etc/traefik/certs/aspclean.localhost-key.pem

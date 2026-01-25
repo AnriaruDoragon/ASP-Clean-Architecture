@@ -11,6 +11,10 @@ vars:
   TEST_APPLICATION: "Tests/Application.UnitTests"
   TEST_INTEGRATION: "Tests/Web.API.IntegrationTests"
 
+  # Deploy
+  PUBLISH_DIR: "./publish"
+  DEPLOY_RUNTIME: '{{default "linux-x64" .DEPLOY_RUNTIME}}'
+
 tasks:
   default:
     desc: List all commands
@@ -128,49 +132,137 @@ tasks:
     aliases: [ef:d:drop]
     cmd: dotnet ef database drop --project {{.INFRA_PROJECT}} --startup-project Web.API --force
 
+  db:shell:
+    desc: Open PostgreSQL shell
+    cmd: docker compose exec db psql -U postgres -d aspcleanarchitecture
+
   # ============================================================================
-  # Docker
+  # Docker Development
   # ============================================================================
 
   docker:up:
-    desc: Start containers (with dev proxy & caching)
-    aliases: [up, d:up]
-    cmd: docker compose --profile dev --profile caching up --build -d {{.CLI_ARGS}}
+    desc: Start dev environment (DB+Redis on Windows/Mac, full stack on Linux)
+    aliases: [up]
+    cmds:
+      - task: '{{if eq OS "windows"}}docker:up:infra{{else if eq OS "darwin"}}docker:up:infra{{else}}docker:up:full{{end}}'
 
-  docker:up:minimal:
-    desc: Start containers (API + DB only)
-    aliases: [up:min]
-    cmd: docker compose up --build -d {{.CLI_ARGS}}
+  docker:up:infra:
+    desc: Start infrastructure only (DB, Redis, Traefik)
+    aliases: [d:up:infra]
+    cmd: docker compose up -d
+
+  docker:up:full:
+    desc: Start full dev environment (infrastructure + API container)
+    aliases: [d:up:full]
+    cmd: docker compose --profile full up -d
 
   docker:down:
-    desc: Stop containers
-    aliases: [down, d:down]
-    cmd: docker compose down {{.CLI_ARGS}}
-
-  docker:reset:
-    desc: Stop containers and remove volumes
-    aliases: [d:reset]
-    cmd: docker compose down -v {{.CLI_ARGS}}
+    desc: Stop dev environment
+    aliases: [down]
+    cmd: docker compose --profile full down
 
   docker:logs:
-    desc: View container logs
-    aliases: [logs, d:logs]
-    cmd: docker compose logs -f {{.CLI_ARGS}}
+    desc: View dev logs
+    aliases: [logs]
+    cmd: docker compose --profile full logs -f {{.CLI_ARGS}}
 
-  docker:logs:api:
-    desc: View API logs
-    aliases: [logs:api]
-    cmd: docker compose logs -f api
+  docker:watch:
+    desc: Start full dev with attached logs (see hot-reload output)
+    cmd: docker compose --profile full up
 
-  docker:ps:
-    desc: List running containers
-    aliases: [ps, d:ps]
-    cmd: docker compose ps
+  docker:clean:
+    desc: Remove all containers and volumes
+    cmd: docker compose --profile full --profile prod down -v
 
-  docker:build:
+  docker:rebuild:
+    desc: Rebuild and restart containers
+    cmd: docker compose --profile full up --build -d
+
+  # ============================================================================
+  # Certificate Setup (mkcert)
+  # ============================================================================
+
+  certs:setup:
+    desc: Generate mkcert certificates for local HTTPS
+    platforms: [linux, darwin]
+    cmd: ./scripts/setup-certs.sh
+
+  certs:setup:windows:
+    desc: Generate mkcert certificates for local HTTPS (Windows)
+    platforms: [windows]
+    cmd: powershell -ExecutionPolicy Bypass -File scripts/setup-certs.ps1
+
+  # ============================================================================
+  # Production (Docker Compose)
+  # ============================================================================
+
+  prod:up:
+    desc: Start production containers
+    aliases: [p:up]
+    cmd: docker compose --profile prod up --build -d {{.CLI_ARGS}}
+
+  prod:down:
+    desc: Stop production containers
+    aliases: [p:down]
+    cmd: docker compose --profile prod down {{.CLI_ARGS}}
+
+  prod:logs:
+    desc: View production logs
+    aliases: [p:logs]
+    cmd: docker compose --profile prod logs -f {{.CLI_ARGS}}
+
+  prod:ps:
+    desc: List production containers
+    aliases: [p:ps]
+    cmd: docker compose --profile prod ps
+
+  prod:build:
     desc: Build Docker image
-    aliases: [d:build]
+    aliases: [p:build]
     cmd: docker build -t aspcleanarchitecture -f Web.API/Dockerfile .
+
+  # ============================================================================
+  # Deploy (Non-Containerized - for VMs like EC2)
+  # ============================================================================
+
+  deploy:build:
+    desc: Build self-contained deployment package
+    aliases: [d:build]
+    cmds:
+      - dotnet publish {{.API_PROJECT}} -c Release -o {{.PUBLISH_DIR}} --self-contained -r {{.DEPLOY_RUNTIME}}
+      - echo "Published to {{.PUBLISH_DIR}} for {{.DEPLOY_RUNTIME}}"
+
+  deploy:build:fdd:
+    desc: Build framework-dependent deployment (smaller, requires .NET on server)
+    aliases: [d:build:fdd]
+    cmds:
+      - dotnet publish {{.API_PROJECT}} -c Release -o {{.PUBLISH_DIR}} --no-self-contained
+      - echo "Published to {{.PUBLISH_DIR}} (framework-dependent)"
+
+  deploy:package:
+    desc: Create deployment tarball
+    aliases: [d:package]
+    platforms: [linux, darwin]
+    deps: [deploy:build]
+    cmds:
+      - tar -czvf aspclean-{{.DEPLOY_RUNTIME}}.tar.gz -C {{.PUBLISH_DIR}} .
+      - echo "Created aspclean-{{.DEPLOY_RUNTIME}}.tar.gz"
+
+  deploy:package:windows:
+    desc: Create deployment zip
+    aliases: [d:package:windows]
+    platforms: [windows]
+    deps: [deploy:build]
+    cmds:
+      - powershell Compress-Archive -Path "{{.PUBLISH_DIR}}/*" -DestinationPath "aspclean-{{.DEPLOY_RUNTIME}}.zip" -Force
+      - echo "Created aspclean-{{.DEPLOY_RUNTIME}}.zip"
+
+  deploy:clean:
+    desc: Clean publish directory
+    aliases: [d:clean]
+    cmds:
+      - '{{if eq OS "windows"}}rmdir /s /q {{.PUBLISH_DIR}}{{else}}rm -rf {{.PUBLISH_DIR}}{{end}}'
+    ignore_error: true
 
   # ============================================================================
   # CI/CD Tasks (for GitHub Actions)

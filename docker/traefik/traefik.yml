@@ -1,0 +1,46 @@
+# Traefik Static Configuration
+# Documentation: https://doc.traefik.io/traefik/
+
+api:
+  dashboard: true
+  insecure: true  # Dashboard on port 8080 without auth (dev only)
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+
+  websecure:
+    address: ":443"
+
+providers:
+  # File provider for static routes (routing to host machine)
+  # This is the primary provider for Windows development
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+  # Docker provider for auto-discovery of containers with labels
+  # Used in "full" profile when API runs in container
+  # Note: May show errors on Windows if Docker socket is not accessible
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: aspclean-network
+
+# TLS configuration with mkcert certificates
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/traefik/certs/aspclean.localhost.pem
+        keyFile: /etc/traefik/certs/aspclean.localhost-key.pem
+
+log:
+  level: INFO
+
+accessLog: {}

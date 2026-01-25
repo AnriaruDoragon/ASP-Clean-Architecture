@@ -1,7 +1,29 @@
+# Docker Compose with Profile-based Architecture
+#
+# Profiles:
+#   - (default):  Infrastructure only - db, redis, traefik proxying to host
+#   - full:       Infrastructure + API container with hot-reload
+#   - prod:       Production stack with Nginx
+#
+# Usage:
+#   docker compose up                     # Default: DB + Redis + Traefik (API runs locally)
+#   docker compose --profile full up      # Full: DB + Redis + Traefik + API container
+#   docker compose --profile prod up      # Production: DB + Redis + API + Nginx
+#
+# Or use Taskfile:
+#   task docker:up                        # Smart command (Windows: default, Linux: full)
+#   task docker:up:full                   # Full profile
+#   task prod:up                          # Production profile
+
+name: aspclean
+
 services:
-  # PostgreSQL 18 database
+  # =============================================================================
+  # Database - Development (default and full profiles)
+  # =============================================================================
   db:
     image: postgres:18-alpine
+    container_name: aspclean-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -9,36 +31,161 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
       - aspclean-network
 
-  # ASP.NET Core API
-  api:
+  # =============================================================================
+  # Database - Production (prod profile only)
+  # =============================================================================
+  db-prod:
+    image: postgres:18-alpine
+    container_name: aspclean-db-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-aspcleanarchitecture}
+    volumes:
+      - postgres-data-prod:/var/lib/postgresql/data
+    # No port exposure in production
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aspclean-network
+    restart: unless-stopped
+    profiles: ["prod"]
+
+  # =============================================================================
+  # Redis - Development (default and full profiles)
+  # =============================================================================
+  redis:
+    image: redis:8-alpine
+    container_name: aspclean-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - aspclean-network
+
+  # =============================================================================
+  # Redis - Production (prod profile only)
+  # =============================================================================
+  redis-prod:
+    image: redis:8-alpine
+    container_name: aspclean-redis-prod
+    # No port exposure in production
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - aspclean-network
+    restart: unless-stopped
+    profiles: ["prod"]
+
+  # =============================================================================
+  # Traefik - Development reverse proxy (default and full profiles)
+  # =============================================================================
+  traefik:
+    image: traefik:v3.3
+    container_name: aspclean-traefik
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - ./docker/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./docker/traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./docker/certs:/etc/traefik/certs:ro
+      # Docker socket: works on both Windows (npipe) and Linux/Mac (unix socket)
+      - //var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - aspclean-network
+    # Linux compatibility: resolve host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # =============================================================================
+  # API Container - Development with hot-reload (full profile only)
+  # =============================================================================
+  api-dev:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: aspclean-api-dev
+    working_dir: /src
+    command: dotnet watch --project Web.API/Web.API.csproj --non-interactive
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+      - DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1
+      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db;Database=${POSTGRES_DB:-aspcleanarchitecture};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
+      - JWT__SECRETKEY=${JWT_SECRET_KEY:-YourSuperSecretKeyForDevelopmentOnly123!}
+      - JWT__ISSUER=${JWT_ISSUER:-ASPCleanArchitecture}
+      - JWT__AUDIENCE=${JWT_AUDIENCE:-ASPCleanArchitecture}
+      - CACHING__ENABLED=${CACHING_ENABLED:-true}
+      - CACHING__PROVIDER=Redis
+      - CACHING__REDIS__CONNECTIONSTRING=redis:6379
+    volumes:
+      - .:/src
+      - nuget-cache:/root/.nuget/packages
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aspclean-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-dev.rule=Host(`api.aspclean.localhost`)"
+      - "traefik.http.routers.api-dev.entrypoints=websecure"
+      - "traefik.http.routers.api-dev.tls=true"
+      - "traefik.http.services.api-dev.loadbalancer.server.port=8080"
+      # Higher priority than file-based config (takes precedence when running)
+      - "traefik.http.routers.api-dev.priority=10"
+    profiles: ["full"]
+
+  # =============================================================================
+  # API Container - Production (prod profile only)
+  # =============================================================================
+  api-prod:
     build:
       context: .
       dockerfile: Web.API/Dockerfile
-    ports:
-      - "5050:8080"
+    container_name: aspclean-api-prod
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db;Database=${POSTGRES_DB:-aspcleanarchitecture};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db-prod;Database=${POSTGRES_DB:-aspcleanarchitecture};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
       - JWT__SECRETKEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
       - JWT__ISSUER=${JWT_ISSUER:-ASPCleanArchitecture}
       - JWT__AUDIENCE=${JWT_AUDIENCE:-ASPCleanArchitecture}
       - JWT__ACCESSTOKENEXPIRATIONMINUTES=${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:-15}
       - JWT__REFRESHTOKENEXPIRATIONDAYS=${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:-7}
       - CORS__ALLOWEDORIGINS=${CORS_ALLOWED_ORIGINS:-}
-      - CACHING__ENABLED=${CACHING_ENABLED:-false}
-      - CACHING__PROVIDER=${CACHING_PROVIDER:-Memory}
-      - CACHING__REDIS__CONNECTIONSTRING=${CACHING_REDIS_CONNECTION_STRING:-redis:6379}
+      - CACHING__ENABLED=${CACHING_ENABLED:-true}
+      - CACHING__PROVIDER=Redis
+      - CACHING__REDIS__CONNECTIONSTRING=redis-prod:6379
+    expose:
+      - "8080"
     depends_on:
-      db:
+      db-prod:
+        condition: service_healthy
+      redis-prod:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health/live || exit 1"]
@@ -48,44 +195,40 @@ services:
       start_period: 10s
     networks:
       - aspclean-network
+    restart: unless-stopped
+    profiles: ["prod"]
 
-  # Caddy reverse proxy (dev only - provides HTTPS at api.localhost)
-  proxy:
-    image: caddy:2-alpine
+  # =============================================================================
+  # Nginx - Production reverse proxy (prod profile only)
+  # =============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: aspclean-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/certs:/etc/nginx/certs:ro
     depends_on:
-      - api
+      api-prod:
+        condition: service_healthy
     networks:
       - aspclean-network
-    profiles:
-      - dev
+    restart: unless-stopped
+    profiles: ["prod"]
 
-  # Redis (optional, for distributed caching)
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    networks:
-      - aspclean-network
-    profiles:
-      - caching
-
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
   postgres-data:
-  caddy-data:
-  caddy-config:
+  postgres-data-prod:
+  nuget-cache:
 
+# =============================================================================
+# Networks
+# =============================================================================
 networks:
   aspclean-network:
     driver: bridge

@@ -8,133 +8,200 @@
 
 A production-ready ASP.NET Core 10.0 template implementing Clean Architecture with CQRS pattern.
 
-## Build & Run Commands
+## Quick Start
+
+```bash
+# 1. Setup environment
+cp .env.example .env
+
+# 2. Start development environment
+task docker:up            # Windows/Mac: DB+Redis+Traefik, Linux: full stack
+task watch                # Run API locally (Windows/Mac)
+
+# Access: http://localhost:5141
+```
+
+**Optional: Local HTTPS domain** (production-like setup)
+```bash
+# Generate HTTPS certificates (requires mkcert)
+task certs:setup:windows  # Windows
+task certs:setup          # Linux/Mac
+
+# Add hosts entry (run as admin/sudo)
+# Add: 127.0.0.1 api.aspclean.localhost
+
+# Access: https://api.aspclean.localhost
+```
+
+## Development Setup
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [Task](https://taskfile.dev/) (task runner)
+- [mkcert](https://github.com/FiloSottile/mkcert) *(optional, for local HTTPS)*
+
+### First-Time Setup
+
+1. **Copy environment file:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **(Optional) Local HTTPS domain setup:**
+   ```bash
+   # Generate certificates (requires mkcert)
+   task certs:setup:windows  # Windows
+   task certs:setup          # Linux/Mac
+
+   # Add hosts entry (requires admin/sudo)
+   # Windows: C:\Windows\System32\drivers\etc\hosts
+   # Linux/Mac: /etc/hosts
+   127.0.0.1 api.aspclean.localhost
+   ```
+
+### Development Workflow
+
+**Windows/Mac** (recommended): Run DB + Redis in Docker, .NET locally via IDE:
+```bash
+task docker:up   # Start infrastructure (DB, Redis, Traefik)
+task watch       # Run API with hot-reload
+```
+
+**Linux**: Run everything in Docker:
+```bash
+task docker:up   # Starts full stack including API container
+```
+
+**Development Endpoints:**
+
+| Endpoint | URL |
+|----------|-----|
+| API (direct) | http://localhost:5141 |
+| API (via Traefik) | https://api.aspclean.localhost *(requires hosts entry)* |
+| Scalar API docs | http://localhost:5141/scalar/v1 |
+| Traefik Dashboard | http://localhost:8080 |
+
+### Docker Commands
+
+| Command | Description |
+|---------|-------------|
+| `task docker:up` | Smart start (Windows/Mac: infra, Linux: full) |
+| `task docker:up:infra` | Start infrastructure only |
+| `task docker:up:full` | Start full stack with API container |
+| `task docker:down` | Stop all containers |
+| `task docker:logs` | View container logs |
+| `task docker:clean` | Remove containers and volumes |
+
+## Production Deployment
+
+### Docker Compose
+
+```bash
+# Configure production values in .env
+task prod:up     # Build and start production stack
+task prod:logs   # View logs
+task prod:down   # Stop
+```
+
+**Production services:**
+- **PostgreSQL 18** - Database (internal only)
+- **Redis 8** - Distributed caching (internal only)
+- **API** - ASP.NET Core application
+- **Nginx** - Reverse proxy with HTTPS
+
+### VM/EC2 Deployment
+
+Build a self-contained package for deployment to VMs:
+
+```bash
+# Build for Linux x64 (default)
+task deploy:build
+
+# Build for different runtime
+task deploy:build DEPLOY_RUNTIME=linux-arm64  # ARM64 (AWS Graviton)
+task deploy:build DEPLOY_RUNTIME=win-x64      # Windows
+
+# Create deployment package
+task deploy:package          # Creates .tar.gz (Linux/Mac)
+task deploy:package:windows  # Creates .zip (Windows)
+```
+
+**Systemd service example** (`/etc/systemd/system/aspclean.service`):
+```ini
+[Unit]
+Description=ASP.NET Clean Architecture API
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+WorkingDirectory=/opt/aspclean
+ExecStart=/opt/aspclean/Web.API
+Restart=always
+RestartSec=10
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://localhost:5000
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## Build & Test Commands
 
 ```bash
 # Build
-dotnet build
+task build              # Debug build
+task build:release      # Release build
 
-# Run (development)
-dotnet run --project Web.API/Web.API.csproj
+# Run
+task run                # Run API
+task watch              # Run with hot-reload
 
-# Production build
-dotnet build --configuration Release
-
-# EF Core migrations
-dotnet ef migrations add <MigrationName> --project Infrastructure --startup-project Web.API --output-dir Data/Migrations
-dotnet ef database update --project Infrastructure --startup-project Web.API
-```
-
-**Local Development Endpoints:**
-- HTTP: http://localhost:5141
-- HTTPS: https://localhost:7145
-- Scalar API docs (dev): https://localhost:7145/scalar/v1
-
-### Docker Development
-
-**First-time setup** - create a `.env` file with required secrets:
-```bash
-# Copy the example and edit
-cp .env.example .env
-
-# Required variables
-POSTGRES_PASSWORD=your-secure-password
-JWT_SECRET_KEY=your-secret-key-at-least-32-characters
-```
-
-Run the full stack (API + PostgreSQL):
-```bash
-docker compose up
-```
-
-**Docker Endpoints:**
-- API: http://localhost:5050
-- Scalar API docs: http://localhost:5050/scalar/v1
-- PostgreSQL: localhost:5432
-- Health check: http://localhost:5050/health/ready
-
-**Services included:**
-- **PostgreSQL 18** - Database
-- **API** - ASP.NET Core application
-- **Caddy** (dev profile) - Reverse proxy with HTTPS at `https://api.localhost`
-- **Redis** (caching profile) - Distributed caching
-
-**First-time database setup** (create tables):
-```bash
-dotnet ef database update --project Infrastructure --startup-project Web.API
-```
-
-**Useful commands:**
-```bash
-# Start in detached mode
-docker compose up -d
-
-# Start with HTTPS proxy (https://api.localhost)
-docker compose --profile dev up -d
-
-# Start with Redis caching
-docker compose --profile caching up -d
-
-# Start with both proxy and caching
-docker compose --profile dev --profile caching up -d
-
-# View logs
-docker compose logs -f api
-
-# Rebuild after code changes
-docker compose up --build
-
-# Stop and remove containers
-docker compose down
-
-# Stop and remove containers + volumes (reset database)
-docker compose down -v
-```
-
-**Environment Variables:**
-See `.env.example` for all available variables. Required variables will cause Docker Compose to fail with a clear error if not set.
-
-### Taskfile
-
-This project uses [Taskfile](https://taskfile.dev/) for common development commands:
-
-```bash
-# .NET Commands
-task build              # Build solution (alias: b)
-task build:release      # Build for production (alias: b:r, b:prod)
-task run                # Run the API (alias: start, serve)
-task watch              # Run with hot reload (alias: dev, w)
-task format             # Format code (alias: fmt)
-
-# Testing
-task test               # Run all tests (alias: t)
-task test:unit          # Run unit tests only (alias: t:u)
-task test:integration   # Run integration tests (alias: t:i)
-task test:coverage      # Run tests with coverage (alias: t:c)
+# Test
+task test               # All tests
+task test:unit          # Unit tests only
+task test:integration   # Integration tests
 
 # EF Core Migrations
-task migration:add -- Name    # Create migration (alias: m:add)
-task migration:list           # List migrations (alias: m:list)
-task db:update                # Apply migrations (alias: m:apply)
-task db:drop                  # Drop database
-
-# Docker
-task docker:up          # Start with dev proxy & caching (alias: up)
-task docker:up:minimal  # Start API + DB only (alias: up:min)
-task docker:down        # Stop containers (alias: down)
-task docker:reset       # Stop and remove volumes
-task docker:logs        # View all logs (alias: logs)
-task docker:logs:api    # View API logs only
-
-# Raw dotnet ef access
-task ef -- migrations list    # Run any dotnet ef command
+task migration:add -- Name    # Create migration
+task db:update                # Apply migrations
+task db:shell                 # PostgreSQL shell
 ```
 
-View all available commands:
+### Taskfile Commands
 
 ```bash
-task --list-all   # Or just: task
+# Development
+task docker:up          # Start dev environment (smart)
+task docker:down        # Stop dev environment
+task watch              # Run with hot reload
+
+# Production
+task prod:up            # Start production containers
+task prod:down          # Stop production containers
+
+# Deploy (VM/EC2)
+task deploy:build       # Build self-contained package
+task deploy:package     # Create deployment tarball/zip
+
+# Testing
+task test               # Run all tests
+task test:unit          # Unit tests only
+task test:coverage      # Tests with coverage
+
+# Database
+task migration:add -- Name    # Create migration
+task db:update                # Apply migrations
+task db:shell                 # PostgreSQL shell
+
+# Utilities
+task format             # Format code
+task info               # Show environment info
 ```
+
+View all commands: `task --list-all`
 
 ## Architecture
 
@@ -334,7 +401,7 @@ The readiness check includes database connectivity. Responses use the standard h
 
 ```bash
 # Check if API is ready
-curl http://localhost:5050/health/ready
+curl http://localhost:5141/health/ready
 ```
 
 ## Observability
@@ -367,7 +434,7 @@ Every request is assigned a unique correlation ID for distributed tracing:
 
 ```bash
 # Pass a correlation ID
-curl -H "X-Correlation-ID: my-trace-123" http://localhost:5050/Products
+curl -H "X-Correlation-ID: my-trace-123" http://localhost:5141/Products
 ```
 
 ### Request Logging
@@ -466,11 +533,7 @@ public sealed record GetProductByIdQuery(Guid Id)
 
 Implement `ICacheableQuery` to enable automatic caching via `CachingBehavior`.
 
-**Docker with Redis:**
-```bash
-# Start with Redis profile
-docker compose --profile caching up
-```
+Redis is included in the Docker development stack and production deployment.
 
 ## Background Jobs
 

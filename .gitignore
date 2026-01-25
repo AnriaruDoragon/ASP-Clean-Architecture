@@ -9,13 +9,21 @@ riderModule.iml
 # >>> Runtime
 bin/
 obj/
+dir/
 /packages/
 # <<< Runtime
 
 # >>> Configurations
-appsettings*.json
-!appsettings.json
-!appsettings.Development.json
 .env*
-!.env.example
+!*.example
 # <<< Configurations
+
+# >>> Docker
+docker/certs/
+# <<< Docker
+
+# >>> Deploy artifacts
+publish/
+*.tar.gz
+*.zip
+# <<< Deploy artifacts

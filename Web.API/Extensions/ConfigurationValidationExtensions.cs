@@ -63,7 +63,7 @@ public static class ConfigurationValidationExtensions
         // Check for development-only settings in production
         if (!app.Environment.IsDevelopment())
         {
-            var corsOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+            string[]? corsOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
             if (corsOrigins is null || corsOrigins.Length == 0)
             {
                 logger.LogWarning("CORS AllowedOrigins is not configured. All origins will be allowed in development mode only.");
