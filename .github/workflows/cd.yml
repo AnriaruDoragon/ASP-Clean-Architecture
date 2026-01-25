@@ -1,0 +1,62 @@
+name: CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main]
+
+jobs:
+  deploy:
+    name: 🚀 Deploy
+    runs-on: ubuntu-latest
+
+    # TODO: Configure environment for deployment approvals
+    # environment:
+    #   name: production
+    #   url: https://your-app.com
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # TODO: Add your deployment steps here. Examples:
+      #
+      # Docker Registry (GHCR):
+      # - uses: docker/setup-buildx-action@v3
+      # - uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+      # - uses: docker/build-push-action@v6
+      #   with:
+      #     push: true
+      #     tags: ghcr.io/${{ github.repository }}:latest
+      #
+      # Azure Web App:
+      # - uses: azure/webapps-deploy@v3
+      #   with:
+      #     app-name: your-app-name
+      #     publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+      #
+      # AWS ECS:
+      # - uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-1
+      # - run: aws ecs update-service --cluster your-cluster --service your-service --force-new-deployment
+      #
+      # Kubernetes:
+      # - uses: azure/k8s-set-context@v4
+      #   with:
+      #     kubeconfig: ${{ secrets.KUBE_CONFIG }}
+      # - run: kubectl rollout restart deployment/your-app
+
+      - name: 📋 Deploy placeholder
+        run: |
+          echo "🚀 Deploy job triggered"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "Configure deployment steps in .github/workflows/cd.yml"

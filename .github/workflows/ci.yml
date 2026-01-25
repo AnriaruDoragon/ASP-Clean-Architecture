@@ -1,10 +1,9 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [master, main, develop]
   pull_request:
-    branches: [master, main, develop]
 
 env:
   DOTNET_VERSION: '10.0.x'
