@@ -25,11 +25,10 @@ public sealed class JwtService(IOptions<JwtSettings> options) : IJwtService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        // Only include user ID - authorization is checked against DB
         Claim[] claims =
         [
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         ];
 
         var token = new JwtSecurityToken(
@@ -68,7 +67,7 @@ public sealed class JwtService(IOptions<JwtSettings> options) : IJwtService
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
-                ValidateLifetime = false, // Don't validate expiration for refresh flow
+                ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = _settings.Issuer,
                 ValidAudience = _settings.Audience,

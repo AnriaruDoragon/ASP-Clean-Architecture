@@ -58,7 +58,7 @@ public static class RateLimitingExtensions
             {
                 context.HttpContext.Response.ContentType = "application/problem+json";
 
-                double? retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retry)
+                double? retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retry)
                     ? retry.TotalSeconds
                     : null;
 

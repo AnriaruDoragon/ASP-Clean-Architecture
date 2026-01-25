@@ -41,7 +41,7 @@ public class AuditableEntityInterceptor(
             .Entries<AuditableEntity>()
             .Where(e => e.State is EntityState.Added or EntityState.Modified);
 
-        foreach (var entry in entries)
+        foreach (EntityEntry<AuditableEntity> entry in entries)
         {
             DateTime now = dateTimeProvider.UtcNow;
             Guid? userId = currentUserService.UserId;

@@ -21,7 +21,7 @@ public sealed class ResetPasswordCommandHandler(
     public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
         User? user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email.ToLowerInvariant(), cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.InvariantCultureIgnoreCase), cancellationToken);
 
         if (user is null)
         {

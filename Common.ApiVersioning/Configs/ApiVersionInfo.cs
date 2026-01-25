@@ -159,7 +159,7 @@ public class ApiVersionInfo
     /// </value>
     /// <remarks>
     /// <para>
-    /// Supports markdown formatting for rich documentation.
+    /// Supports Markdown formatting for rich documentation.
     /// Use this to explain what's new, what changed, migration guides, etc.
     /// </para>
     /// </remarks>

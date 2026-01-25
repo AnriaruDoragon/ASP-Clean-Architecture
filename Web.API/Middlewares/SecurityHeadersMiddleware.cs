@@ -9,14 +9,14 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context)
     {
         // Prevent MIME type sniffing
-        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        context.Response.Headers.XContentTypeOptions = "nosniff";
 
         // Control referrer information leakage
         context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
         // Prevent caching of sensitive responses (can be overridden per-endpoint)
-        context.Response.Headers["Cache-Control"] = "no-store";
-        context.Response.Headers["Pragma"] = "no-cache";
+        context.Response.Headers.CacheControl = "no-store";
+        context.Response.Headers.Pragma = "no-cache";
 
         await next(context);
     }

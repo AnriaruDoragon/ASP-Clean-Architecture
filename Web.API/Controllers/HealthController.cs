@@ -35,14 +35,14 @@ public class HealthController(HealthCheckService healthCheckService) : Controlle
         {
             Status = report.Status.ToString(),
             Duration = report.TotalDuration.TotalMilliseconds,
-            Entries = report.Entries.Select(e => new HealthEntryResponse
+            Entries = [.. report.Entries.Select(e => new HealthEntryResponse
             {
                 Name = e.Key,
                 Status = e.Value.Status.ToString(),
                 Duration = e.Value.Duration.TotalMilliseconds,
                 Description = e.Value.Description,
                 Error = e.Value.Exception?.Message
-            }).ToList()
+            })]
         };
 
         return report.Status == HealthStatus.Healthy

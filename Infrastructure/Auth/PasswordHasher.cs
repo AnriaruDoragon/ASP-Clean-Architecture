@@ -10,7 +10,7 @@ public sealed class PasswordHasher : IPasswordHasher
 {
     private const int SaltSize = 16; // 128 bits
     private const int HashSize = 32; // 256 bits
-    private const int Iterations = 100000; // OWASP recommended minimum
+    private const int Iterations = 100_000; // OWASP recommended minimum
 
     public string Hash(string password)
     {
@@ -32,7 +32,7 @@ public sealed class PasswordHasher : IPasswordHasher
         if (parts.Length != 3)
             return false;
 
-        if (!int.TryParse(parts[0], out var iterations))
+        if (!int.TryParse(parts[0], out int iterations))
             return false;
 
         byte[] salt = Convert.FromBase64String(parts[1]);

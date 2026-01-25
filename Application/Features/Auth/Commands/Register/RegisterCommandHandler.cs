@@ -18,7 +18,7 @@ public sealed class RegisterCommandHandler(
     {
         // Check if email already exists
         bool emailExists = await context.Users
-            .AnyAsync(u => u.Email == request.Email.ToLowerInvariant(), cancellationToken);
+            .AnyAsync(u => u.Email.Equals(request.Email, StringComparison.InvariantCultureIgnoreCase), cancellationToken);
 
         if (emailExists)
             return Result.Failure<AuthTokens>(Error.Conflict("User.EmailTaken", "Email is already registered."));

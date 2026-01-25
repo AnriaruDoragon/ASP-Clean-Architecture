@@ -14,10 +14,7 @@ public static class GracefulShutdownExtensions
     {
         int shutdownTimeoutSeconds = configuration.GetValue("GracefulShutdown:TimeoutSeconds", 30);
 
-        services.Configure<HostOptions>(options =>
-        {
-            options.ShutdownTimeout = TimeSpan.FromSeconds(shutdownTimeoutSeconds);
-        });
+        services.Configure<HostOptions>(options => options.ShutdownTimeout = TimeSpan.FromSeconds(shutdownTimeoutSeconds));
 
         return services;
     }
@@ -30,20 +27,11 @@ public static class GracefulShutdownExtensions
         IHostApplicationLifetime lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
         ILogger logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("GracefulShutdown");
 
-        lifetime.ApplicationStarted.Register(() =>
-        {
-            logger.LogInformation("Application started. Press Ctrl+C to shut down.");
-        });
+        lifetime.ApplicationStarted.Register(() => logger.LogInformation("Application started. Press Ctrl+C to shut down."));
 
-        lifetime.ApplicationStopping.Register(() =>
-        {
-            logger.LogInformation("Application is shutting down...");
-        });
+        lifetime.ApplicationStopping.Register(() => logger.LogInformation("Application is shutting down..."));
 
-        lifetime.ApplicationStopped.Register(() =>
-        {
-            logger.LogInformation("Application has stopped.");
-        });
+        lifetime.ApplicationStopped.Register(() => logger.LogInformation("Application has stopped."));
 
         return app;
     }

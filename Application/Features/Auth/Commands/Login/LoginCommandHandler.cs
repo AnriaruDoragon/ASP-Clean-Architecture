@@ -18,7 +18,7 @@ public sealed class LoginCommandHandler(
     {
         // Find user by email
         User? user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email.ToLowerInvariant(), cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.InvariantCultureIgnoreCase), cancellationToken);
 
         if (user is null)
             return Result.Failure<AuthTokens>(Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password."));

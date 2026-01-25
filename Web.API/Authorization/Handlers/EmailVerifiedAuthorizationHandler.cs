@@ -21,7 +21,7 @@ public sealed class EmailVerifiedAuthorizationHandler(
         Claim? userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)
                              ?? context.User.FindFirst(JwtRegisteredClaimNames.Sub);
 
-        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
         {
             context.Fail();
             return;

@@ -110,8 +110,8 @@ public static class DependencyInjection
 
         // Register Background Jobs
         services.Configure<BackgroundJobSettings>(configuration.GetSection(BackgroundJobSettings.SectionName));
-        var jobSettings = configuration.GetSection(BackgroundJobSettings.SectionName).Get<BackgroundJobSettings>()
-            ?? new BackgroundJobSettings();
+        BackgroundJobSettings jobSettings = configuration.GetSection(BackgroundJobSettings.SectionName)
+                                                .Get<BackgroundJobSettings>() ?? new BackgroundJobSettings();
 
         switch (jobSettings.Provider)
         {

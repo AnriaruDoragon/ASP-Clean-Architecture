@@ -14,19 +14,22 @@ public static class ResultExtensions
     public static IActionResult ToActionResult(this Result result)
         => result.IsSuccess ? new OkResult() : ToProblemDetails(result.Error);
 
-    /// <summary>
-    /// Converts a Result&lt;T&gt; to an appropriate IActionResult.
-    /// </summary>
-    public static IActionResult ToActionResult<T>(this Result<T> result)
-        => result.IsSuccess ? new OkObjectResult(result.Value) : ToProblemDetails(result.Error);
+    extension<T>(Result<T> result)
+    {
+        /// <summary>
+        /// Converts a Result&lt;T&gt; to an appropriate IActionResult.
+        /// </summary>
+        public IActionResult ToActionResult()
+            => result.IsSuccess ? new OkObjectResult(result.Value) : ToProblemDetails(result.Error);
 
-    /// <summary>
-    /// Converts a Result&lt;T&gt; to an appropriate IActionResult with a custom success response.
-    /// </summary>
-    public static IActionResult ToActionResult<T>(this Result<T> result, Func<T, IActionResult> onSuccess)
-        => result.IsSuccess ? onSuccess(result.Value) : ToProblemDetails(result.Error);
+        /// <summary>
+        /// Converts a Result&lt;T&gt; to an appropriate IActionResult with a custom success response.
+        /// </summary>
+        public IActionResult ToActionResult(Func<T, IActionResult> onSuccess)
+            => result.IsSuccess ? onSuccess(result.Value) : ToProblemDetails(result.Error);
+    }
 
-    private static IActionResult ToProblemDetails(Error error)
+    private static ObjectResult ToProblemDetails(Error error)
     {
         // Handle validation errors with field-level details
         if (error is ValidationError validationError)
