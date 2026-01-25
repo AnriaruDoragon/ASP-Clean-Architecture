@@ -2,8 +2,9 @@ name: CI
 
 on:
   workflow_dispatch:
-  push:
-  pull_request:
+  workflow_call:  # Allow other workflows to call this
+  # push:
+  # pull_request:
 
 env:
   DOTNET_VERSION: '10.0.x'
