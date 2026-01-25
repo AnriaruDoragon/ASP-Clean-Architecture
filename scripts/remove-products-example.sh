@@ -27,11 +27,15 @@ delete_if_exists "Domain/Entities/Product.cs"
 delete_if_exists "Domain/Events/ProductCreatedEvent.cs"
 delete_if_exists "Domain/Events/ProductOutOfStockEvent.cs"
 
-# Remove Products DbSet from IApplicationDbContext
+# Delete tests
+delete_if_exists "Tests/Application.UnitTests/Features/Products"
+delete_if_exists "Tests/Domain.UnitTests/Entities/ProductTests.cs"
+delete_if_exists "Tests/Web.API.IntegrationTests/ProductsControllerTests.cs"
+
+# Remove Products DbSet from IApplicationDbContext (keep using Domain.Entities; for other entities)
 INTERFACE_PATH="Application/Common/Interfaces/IApplicationDbContext.cs"
 if [ -f "$INTERFACE_PATH" ]; then
     sed -i.bak '/\/\/ Example/,/public DbSet<Product> Products/d' "$INTERFACE_PATH"
-    sed -i.bak '/using Domain\.Entities;/d' "$INTERFACE_PATH"
     rm -f "$INTERFACE_PATH.bak"
     echo -e "  \033[32mUpdated: $INTERFACE_PATH\033[0m"
 fi

@@ -14,7 +14,11 @@ $toDelete = @(
     "Web.API/Controllers/V1/ProductsController.cs",
     "Domain/Entities/Product.cs",
     "Domain/Events/ProductCreatedEvent.cs",
-    "Domain/Events/ProductOutOfStockEvent.cs"
+    "Domain/Events/ProductOutOfStockEvent.cs",
+    # Tests
+    "Tests/Application.UnitTests/Features/Products",
+    "Tests/Domain.UnitTests/Entities/ProductTests.cs",
+    "Tests/Web.API.IntegrationTests/ProductsControllerTests.cs"
 )
 
 foreach ($path in $toDelete) {
@@ -29,12 +33,11 @@ foreach ($path in $toDelete) {
     }
 }
 
-# Remove Products DbSet from IApplicationDbContext
+# Remove Products DbSet from IApplicationDbContext (keep using Domain.Entities; for other entities)
 $interfacePath = "Application/Common/Interfaces/IApplicationDbContext.cs"
 if (Test-Path $interfacePath) {
     $content = Get-Content $interfacePath -Raw
     $content = $content -replace "(?m)^\s*// Example\r?\n\s*public DbSet<Product> Products \{ get; \}\r?\n", ""
-    $content = $content -replace "using Domain\.Entities;\r?\n", ""
     Set-Content $interfacePath $content -NoNewline
     Write-Host "  Updated: $interfacePath" -ForegroundColor Green
 }
