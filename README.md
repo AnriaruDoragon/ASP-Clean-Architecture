@@ -23,12 +23,10 @@ task watch                # Run API locally (Windows/Mac)
 
 **Optional: Local HTTPS domain** (production-like setup)
 ```bash
-# Generate HTTPS certificates (requires mkcert)
-task certs:setup:windows  # Windows
-task certs:setup          # Linux/Mac
-
-# Add hosts entry (run as admin/sudo)
-# Add: 127.0.0.1 api.aspclean.localhost
+# Generate HTTPS certificates and configure hosts (requires mkcert)
+# Run as admin/sudo to auto-add hosts entry
+task certs:setup:windows  # Windows (run as Administrator)
+task certs:setup          # Linux/Mac (uses sudo)
 
 # Access: https://api.aspclean.localhost
 ```
@@ -51,14 +49,10 @@ task certs:setup          # Linux/Mac
 
 2. **(Optional) Local HTTPS domain setup:**
    ```bash
-   # Generate certificates (requires mkcert)
-   task certs:setup:windows  # Windows
-   task certs:setup          # Linux/Mac
-
-   # Add hosts entry (requires admin/sudo)
-   # Windows: C:\Windows\System32\drivers\etc\hosts
-   # Linux/Mac: /etc/hosts
-   127.0.0.1 api.aspclean.localhost
+   # Generate certificates and configure hosts (requires mkcert)
+   # Run as admin/sudo to auto-add hosts entry
+   task certs:setup:windows  # Windows (run as Administrator)
+   task certs:setup          # Linux/Mac (uses sudo)
    ```
 
 ### Development Workflow
@@ -76,23 +70,23 @@ task docker:up   # Starts full stack including API container
 
 **Development Endpoints:**
 
-| Endpoint | URL |
-|----------|-----|
-| API (direct) | http://localhost:5141 |
+| Endpoint          | URL                                                     |
+|-------------------|---------------------------------------------------------|
+| API (direct)      | http://localhost:5141                                   |
 | API (via Traefik) | https://api.aspclean.localhost *(requires hosts entry)* |
-| Scalar API docs | http://localhost:5141/scalar/v1 |
-| Traefik Dashboard | http://localhost:8080 |
+| Scalar API docs   | http://localhost:5141/scalar/v1                         |
+| Traefik Dashboard | http://localhost:8080                                   |
 
 ### Docker Commands
 
-| Command | Description |
-|---------|-------------|
-| `task docker:up` | Smart start (Windows/Mac: infra, Linux: full) |
-| `task docker:up:infra` | Start infrastructure only |
-| `task docker:up:full` | Start full stack with API container |
-| `task docker:down` | Stop all containers |
-| `task docker:logs` | View container logs |
-| `task docker:clean` | Remove containers and volumes |
+| Command                | Description                                   |
+|------------------------|-----------------------------------------------|
+| `task docker:up`       | Smart start (Windows/Mac: infra, Linux: full) |
+| `task docker:up:infra` | Start infrastructure only                     |
+| `task docker:up:full`  | Start full stack with API container           |
+| `task docker:down`     | Stop all containers                           |
+| `task docker:logs`     | View container logs                           |
+| `task docker:clean`    | Remove containers and volumes                 |
 
 ## Production Deployment
 
@@ -392,10 +386,10 @@ For complete documentation including configuration options, version statuses, li
 
 Health check endpoints for monitoring and orchestration:
 
-| Endpoint        | Description                                    |
-|-----------------|------------------------------------------------|
-| `/health/live`  | Liveness probe - is the app running?           |
-| `/health/ready` | Readiness probe - is the app ready for traffic?|
+| Endpoint        | Description                                     |
+|-----------------|-------------------------------------------------|
+| `/health/live`  | Liveness probe - is the app running?            |
+| `/health/ready` | Readiness probe - is the app ready for traffic? |
 
 The readiness check includes database connectivity. Responses use the standard health check UI format.
 
@@ -687,4 +681,4 @@ Enforced via `.editorconfig` (C# 14 / .NET 10):
 
 ## Authors
 
-[Anriaru Doragon](https://doragon.me/) (anriarudoragon@gmail.com)
+[AnriaruDoragon](https://doragon.me/) (anriarudoragon@gmail.com)

@@ -102,6 +102,8 @@ services:
   traefik:
     image: traefik:v3.3
     container_name: aspclean-traefik
+    environment:
+      - API_DOMAIN=${API_DOMAIN:-api.aspclean.localhost}
     ports:
       - "80:80"
       - "443:443"
@@ -152,7 +154,7 @@ services:
       - aspclean-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api-dev.rule=Host(`api.aspclean.localhost`)"
+      - "traefik.http.routers.api-dev.rule=Host(`${API_DOMAIN:-api.aspclean.localhost}`)"
       - "traefik.http.routers.api-dev.entrypoints=websecure"
       - "traefik.http.routers.api-dev.tls=true"
       - "traefik.http.services.api-dev.loadbalancer.server.port=8080"

@@ -1,6 +1,8 @@
 # >>> Editors
 .idea/
+.run/
 .vs/
+.vscode/
 riderModule.iml
 /_ReSharper.Caches/
 *.sln.DotSettings.user

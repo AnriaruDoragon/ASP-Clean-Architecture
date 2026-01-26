@@ -3,12 +3,14 @@
 #
 # When the api-dev container is running (full profile), its Docker labels
 # will take precedence over this file-based configuration.
+#
+# Note: Uses Go template to read API_DOMAIN from environment (set in .env)
 
 http:
   routers:
     # Route to host machine (default profile - IDE development)
     api-host:
-      rule: "Host(`api.aspclean.localhost`)"
+      rule: "Host(`{{ env "API_DOMAIN" | default "api.aspclean.localhost" }}`)"
       entryPoints:
         - websecure
       service: api-host

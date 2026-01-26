@@ -5,10 +5,24 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CERT_DIR="$SCRIPT_DIR/../docker/certs"
-DOMAIN="aspclean.localhost"
+ROOT_DIR="$SCRIPT_DIR/.."
+CERT_DIR="$ROOT_DIR/docker/certs"
+ENV_FILE="$ROOT_DIR/.env"
+
+# Load API_DOMAIN from .env file if it exists
+API_DOMAIN="api.aspclean.localhost"
+if [ -f "$ENV_FILE" ]; then
+    ENV_DOMAIN=$(grep "^API_DOMAIN=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
+    if [ -n "$ENV_DOMAIN" ]; then
+        API_DOMAIN="$ENV_DOMAIN"
+    fi
+fi
+
+# Extract base domain (remove api. prefix if present)
+DOMAIN="${API_DOMAIN#api.}"
 
 echo "Setting up mkcert certificates for local HTTPS..."
+echo "  Domain: $API_DOMAIN"
 
 # Create certs directory
 mkdir -p "$CERT_DIR"
@@ -46,14 +60,32 @@ echo "  Location: $CERT_DIR"
 echo "  Files:"
 echo "    - ${DOMAIN}.pem"
 echo "    - ${DOMAIN}-key.pem"
+
+# Add hosts entry
+HOSTS_FILE="/etc/hosts"
+HOST_ENTRY="127.0.0.1 ${API_DOMAIN}"
+
 echo ""
-echo "Next steps:"
-echo "  1. Add this line to your hosts file:"
-echo "     127.0.0.1 api.aspclean.localhost"
+echo "Configuring hosts file..."
+
+if grep -q "${API_DOMAIN}" "$HOSTS_FILE" 2>/dev/null; then
+    echo "  Hosts entry already exists: $HOST_ENTRY"
+else
+    if [ -w "$HOSTS_FILE" ]; then
+        echo "$HOST_ENTRY" >> "$HOSTS_FILE"
+        echo "  Added hosts entry: $HOST_ENTRY"
+    elif command -v sudo &> /dev/null; then
+        echo "  Adding hosts entry (sudo required)..."
+        echo "$HOST_ENTRY" | sudo tee -a "$HOSTS_FILE" > /dev/null
+        echo "  Added hosts entry: $HOST_ENTRY"
+    else
+        echo "  Cannot add hosts entry - no write permission"
+        echo ""
+        echo "  Please add manually to $HOSTS_FILE:"
+        echo "    $HOST_ENTRY"
+    fi
+fi
+
 echo ""
-echo "  Hosts file location:"
-echo "    - Linux/Mac: /etc/hosts"
-echo "    - Windows:   C:\\Windows\\System32\\drivers\\etc\\hosts"
-echo ""
-echo "  2. Start the development environment:"
-echo "     task docker:up"
+echo "Setup complete! Start the development environment:"
+echo "  task docker:up"

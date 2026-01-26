@@ -176,6 +176,15 @@ tasks:
 
   docker:rebuild:
     desc: Rebuild and restart containers
+    cmds:
+      - task: '{{if eq OS "windows"}}docker:rebuild:infra{{else if eq OS "darwin"}}docker:rebuild:infra{{else}}docker:rebuild:full{{end}}'
+
+  docker:rebuild:infra:
+    desc: Rebuild infrastructure only
+    cmd: docker compose up --build -d
+
+  docker:rebuild:full:
+    desc: Rebuild full dev environment
     cmd: docker compose --profile full up --build -d
 
   # ============================================================================

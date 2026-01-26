@@ -3,6 +3,7 @@ using Application;
 using Application.Common.Interfaces;
 using Common.ApiVersioning.Extensions;
 using Common.ApiVersioning.Middlewares;
+using DotNetEnv;
 using FluentValidation;
 using Infrastructure;
 using Microsoft.AspNetCore.Authorization;
@@ -12,6 +13,8 @@ using Web.API.Authorization.Handlers;
 using Web.API.Extensions;
 using Web.API.Middlewares;
 using Web.API.Services;
+
+Env.TraversePath().Load();
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
