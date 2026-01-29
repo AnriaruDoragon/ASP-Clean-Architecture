@@ -70,7 +70,7 @@ jobs:
       #     dotnet publish Web.API/Web.API.csproj \
       #       -c Release -o ./publish --self-contained -r linux-x64
       # - name: Create tarball
-      #   run: tar -czvf aspclean.tar.gz -C ./publish .
+      #   run: tar -czvf myapp.tar.gz -C ./publish .
       # - name: Deploy to EC2
       #   env:
       #     EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -78,12 +78,12 @@ jobs:
       #     SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       #   run: |
       #     echo "$SSH_KEY" > key.pem && chmod 600 key.pem
-      #     scp -i key.pem -o StrictHostKeyChecking=no aspclean.tar.gz $EC2_USER@$EC2_HOST:/tmp/
+      #     scp -i key.pem -o StrictHostKeyChecking=no myapp.tar.gz $EC2_USER@$EC2_HOST:/tmp/
       #     ssh -i key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
-      #       sudo systemctl stop aspclean || true
-      #       sudo mkdir -p /opt/aspclean
-      #       sudo tar -xzf /tmp/aspclean.tar.gz -C /opt/aspclean
-      #       sudo systemctl start aspclean
+      #       sudo systemctl stop myapp || true
+      #       sudo mkdir -p /opt/myapp
+      #       sudo tar -xzf /tmp/myapp.tar.gz -C /opt/myapp
+      #       sudo systemctl start myapp
       #     EOF
       #
       # =====================================================================

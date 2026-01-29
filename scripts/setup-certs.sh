@@ -10,7 +10,7 @@ CERT_DIR="$ROOT_DIR/docker/certs"
 ENV_FILE="$ROOT_DIR/.env"
 
 # Load API_DOMAIN from .env file if it exists
-API_DOMAIN="api.aspclean.localhost"
+API_DOMAIN="api.app.localhost"
 if [ -f "$ENV_FILE" ]; then
     ENV_DOMAIN=$(grep "^API_DOMAIN=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d ' ')
     if [ -n "$ENV_DOMAIN" ]; then

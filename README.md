@@ -28,7 +28,7 @@ task watch                # Run API locally (Windows/Mac)
 task certs:setup:windows  # Windows (run as Administrator)
 task certs:setup          # Linux/Mac (uses sudo)
 
-# Access: https://api.aspclean.localhost
+# Access: https://api.app.localhost
 ```
 
 ## Development Setup
@@ -73,7 +73,7 @@ task docker:up   # Starts full stack including API container
 | Endpoint          | URL                                                     |
 |-------------------|---------------------------------------------------------|
 | API (direct)      | http://localhost:5141                                   |
-| API (via Traefik) | https://api.aspclean.localhost *(requires hosts entry)* |
+| API (via Traefik) | https://api.app.localhost *(requires hosts entry)* |
 | Scalar API docs   | http://localhost:5141/scalar/v1                         |
 | Traefik Dashboard | http://localhost:8080                                   |
 
@@ -122,7 +122,7 @@ task deploy:package          # Creates .tar.gz (Linux/Mac)
 task deploy:package:windows  # Creates .zip (Windows)
 ```
 
-**Systemd service example** (`/etc/systemd/system/aspclean.service`):
+**Systemd service example** (`/etc/systemd/system/myapp.service`):
 ```ini
 [Unit]
 Description=ASP.NET Clean Architecture API
@@ -131,8 +131,8 @@ After=network.target
 [Service]
 Type=notify
 User=www-data
-WorkingDirectory=/opt/aspclean
-ExecStart=/opt/aspclean/Web.API
+WorkingDirectory=/opt/myapp
+ExecStart=/opt/myapp/Web.API
 Restart=always
 RestartSec=10
 Environment=ASPNETCORE_ENVIRONMENT=Production
@@ -307,8 +307,8 @@ JWT tokens are used for **authentication only** (proving WHO you are). Authoriza
 ```bash
 CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=localhost;Database=myapp;Username=postgres;Password=secret
 JWT__SECRETKEY=your-secret-key-min-32-chars
-JWT__ISSUER=ASPCleanArchitecture
-JWT__AUDIENCE=ASPCleanArchitecture
+JWT__ISSUER=MyApp
+JWT__AUDIENCE=MyApp
 ```
 
 See `.env.example` for all available variables. Environment variables override `appsettings.json`.

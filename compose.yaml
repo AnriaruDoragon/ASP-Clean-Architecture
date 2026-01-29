@@ -15,7 +15,7 @@
 #   task docker:up:full                   # Full profile
 #   task prod:up                          # Production profile
 
-name: aspclean
+name: ${PROJECT_NAME:-myapp}
 
 services:
   # =============================================================================
@@ -23,11 +23,11 @@ services:
   # =============================================================================
   db:
     image: postgres:18-alpine
-    container_name: aspclean-db
+    container_name: ${PROJECT_NAME:-myapp}-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
-      POSTGRES_DB: ${POSTGRES_DB:-aspcleanarchitecture}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
@@ -38,18 +38,18 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - aspclean-network
+      - app-network
 
   # =============================================================================
   # Database - Production (prod profile only)
   # =============================================================================
   db-prod:
     image: postgres:18-alpine
-    container_name: aspclean-db-prod
+    container_name: ${PROJECT_NAME:-myapp}-db-prod
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
-      POSTGRES_DB: ${POSTGRES_DB:-aspcleanarchitecture}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
     volumes:
       - postgres-data-prod:/var/lib/postgresql/data
     # No port exposure in production
@@ -59,7 +59,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - aspclean-network
+      - app-network
     restart: unless-stopped
     profiles: ["prod"]
 
@@ -68,7 +68,7 @@ services:
   # =============================================================================
   redis:
     image: redis:8-alpine
-    container_name: aspclean-redis
+    container_name: ${PROJECT_NAME:-myapp}-redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -77,14 +77,14 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - aspclean-network
+      - app-network
 
   # =============================================================================
   # Redis - Production (prod profile only)
   # =============================================================================
   redis-prod:
     image: redis:8-alpine
-    container_name: aspclean-redis-prod
+    container_name: ${PROJECT_NAME:-myapp}-redis-prod
     # No port exposure in production
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -92,7 +92,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - aspclean-network
+      - app-network
     restart: unless-stopped
     profiles: ["prod"]
 
@@ -101,9 +101,9 @@ services:
   # =============================================================================
   traefik:
     image: traefik:v3.3
-    container_name: aspclean-traefik
+    container_name: ${PROJECT_NAME:-myapp}-traefik
     environment:
-      - API_DOMAIN=${API_DOMAIN:-api.aspclean.localhost}
+      - API_DOMAIN=${API_DOMAIN:-api.app.localhost}
     ports:
       - "80:80"
       - "443:443"
@@ -115,7 +115,7 @@ services:
       # Docker socket: works on both Windows (npipe) and Linux/Mac (unix socket)
       - //var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - aspclean-network
+      - app-network
     # Linux compatibility: resolve host.docker.internal
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -125,7 +125,7 @@ services:
   # =============================================================================
   api-dev:
     image: mcr.microsoft.com/dotnet/sdk:10.0
-    container_name: aspclean-api-dev
+    container_name: ${PROJECT_NAME:-myapp}-api-dev
     working_dir: /src
     command: dotnet watch --project Web.API/Web.API.csproj --non-interactive
     environment:
@@ -133,11 +133,11 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1
-      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db;Database=${POSTGRES_DB:-aspcleanarchitecture};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
-      - JWT__SECRETKEY=${JWT_SECRET_KEY:-YourSuperSecretKeyForDevelopmentOnly123!}
-      - JWT__ISSUER=${JWT_ISSUER:-ASPCleanArchitecture}
-      - JWT__AUDIENCE=${JWT_AUDIENCE:-ASPCleanArchitecture}
-      - CACHING__ENABLED=${CACHING_ENABLED:-true}
+      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db;Database=${POSTGRES_DB:-app};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
+      - JWT__SECRETKEY=${JWT__SECRETKEY:-YourSuperSecretKeyForDevelopmentOnly123!}
+      - JWT__ISSUER=${JWT__ISSUER:-MyApp}
+      - JWT__AUDIENCE=${JWT__AUDIENCE:-MyApp}
+      - CACHING__ENABLED=${CACHING__ENABLED:-true}
       - CACHING__PROVIDER=Redis
       - CACHING__REDIS__CONNECTIONSTRING=redis:6379
     volumes:
@@ -151,10 +151,10 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - aspclean-network
+      - app-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api-dev.rule=Host(`${API_DOMAIN:-api.aspclean.localhost}`)"
+      - "traefik.http.routers.api-dev.rule=Host(`${API_DOMAIN:-api.app.localhost}`)"
       - "traefik.http.routers.api-dev.entrypoints=websecure"
       - "traefik.http.routers.api-dev.tls=true"
       - "traefik.http.services.api-dev.loadbalancer.server.port=8080"
@@ -169,17 +169,17 @@ services:
     build:
       context: .
       dockerfile: Web.API/Dockerfile
-    container_name: aspclean-api-prod
+    container_name: ${PROJECT_NAME:-myapp}-api-prod
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
-      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db-prod;Database=${POSTGRES_DB:-aspcleanarchitecture};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
-      - JWT__SECRETKEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
-      - JWT__ISSUER=${JWT_ISSUER:-ASPCleanArchitecture}
-      - JWT__AUDIENCE=${JWT_AUDIENCE:-ASPCleanArchitecture}
-      - JWT__ACCESSTOKENEXPIRATIONMINUTES=${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:-15}
-      - JWT__REFRESHTOKENEXPIRATIONDAYS=${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:-7}
-      - CORS__ALLOWEDORIGINS=${CORS_ALLOWED_ORIGINS:-}
-      - CACHING__ENABLED=${CACHING_ENABLED:-true}
+      - CONNECTIONSTRINGS__DEFAULTCONNECTION=Host=db-prod;Database=${POSTGRES_DB:-app};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
+      - JWT__SECRETKEY=${JWT__SECRETKEY:?JWT__SECRETKEY is required}
+      - JWT__ISSUER=${JWT__ISSUER:-MyApp}
+      - JWT__AUDIENCE=${JWT__AUDIENCE:-MyApp}
+      - JWT__ACCESSTOKENEXPIRATIONMINUTES=${JWT__ACCESSTOKENEXPIRATIONMINUTES:-15}
+      - JWT__REFRESHTOKENEXPIRATIONDAYS=${JWT__REFRESHTOKENEXPIRATIONDAYS:-7}
+      - CORS__ALLOWEDORIGINS=${CORS__ALLOWEDORIGINS:-}
+      - CACHING__ENABLED=${CACHING__ENABLED:-true}
       - CACHING__PROVIDER=Redis
       - CACHING__REDIS__CONNECTIONSTRING=redis-prod:6379
     expose:
@@ -196,7 +196,7 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - aspclean-network
+      - app-network
     restart: unless-stopped
     profiles: ["prod"]
 
@@ -205,7 +205,7 @@ services:
   # =============================================================================
   nginx:
     image: nginx:alpine
-    container_name: aspclean-nginx
+    container_name: ${PROJECT_NAME:-myapp}-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -216,7 +216,7 @@ services:
       api-prod:
         condition: service_healthy
     networks:
-      - aspclean-network
+      - app-network
     restart: unless-stopped
     profiles: ["prod"]
 
@@ -232,5 +232,5 @@ volumes:
 # Networks
 # =============================================================================
 networks:
-  aspclean-network:
+  app-network:
     driver: bridge

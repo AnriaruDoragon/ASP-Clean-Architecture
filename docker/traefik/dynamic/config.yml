@@ -10,7 +10,7 @@ http:
   routers:
     # Route to host machine (default profile - IDE development)
     api-host:
-      rule: "Host(`{{ env "API_DOMAIN" | default "api.aspclean.localhost" }}`)"
+      rule: "Host(`{{ env "API_DOMAIN" | default "api.app.localhost" }}`)"
       entryPoints:
         - websecure
       service: api-host

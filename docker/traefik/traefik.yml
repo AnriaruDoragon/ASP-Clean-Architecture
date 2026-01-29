@@ -30,7 +30,7 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    network: aspclean-network
+    network: app-network
 
 # TLS configuration with mkcert certificates
 tls:

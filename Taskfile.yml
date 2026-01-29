@@ -1,5 +1,7 @@
 version: "3"
 
+dotenv: [".env"]
+
 vars:
   SOLUTION: "ASPCleanArchitecture.sln"
   API_PROJECT: "Web.API/Web.API.csproj"
@@ -14,6 +16,7 @@ vars:
   # Deploy
   PUBLISH_DIR: "./publish"
   DEPLOY_RUNTIME: '{{default "linux-x64" .DEPLOY_RUNTIME}}'
+  PROJECT_NAME: '{{default "myapp" .PROJECT_NAME}}'
 
 tasks:
   default:
@@ -134,7 +137,7 @@ tasks:
 
   db:shell:
     desc: Open PostgreSQL shell
-    cmd: docker compose exec db psql -U postgres -d aspcleanarchitecture
+    cmd: docker compose exec db psql -U postgres -d ${POSTGRES_DB:-app}
 
   # ============================================================================
   # Docker Development
@@ -228,7 +231,7 @@ tasks:
   prod:build:
     desc: Build Docker image
     aliases: [p:build]
-    cmd: docker build -t aspcleanarchitecture -f Web.API/Dockerfile .
+    cmd: docker build -t {{.PROJECT_NAME}} -f Web.API/Dockerfile .
 
   # ============================================================================
   # Deploy (Non-Containerized - for VMs like EC2)
@@ -254,8 +257,8 @@ tasks:
     platforms: [linux, darwin]
     deps: [deploy:build]
     cmds:
-      - tar -czvf aspclean-{{.DEPLOY_RUNTIME}}.tar.gz -C {{.PUBLISH_DIR}} .
-      - echo "Created aspclean-{{.DEPLOY_RUNTIME}}.tar.gz"
+      - tar -czvf {{.PROJECT_NAME}}-{{.DEPLOY_RUNTIME}}.tar.gz -C {{.PUBLISH_DIR}} .
+      - echo "Created {{.PROJECT_NAME}}-{{.DEPLOY_RUNTIME}}.tar.gz"
 
   deploy:package:windows:
     desc: Create deployment zip
@@ -263,8 +266,8 @@ tasks:
     platforms: [windows]
     deps: [deploy:build]
     cmds:
-      - powershell Compress-Archive -Path "{{.PUBLISH_DIR}}/*" -DestinationPath "aspclean-{{.DEPLOY_RUNTIME}}.zip" -Force
-      - echo "Created aspclean-{{.DEPLOY_RUNTIME}}.zip"
+      - powershell Compress-Archive -Path "{{.PUBLISH_DIR}}/*" -DestinationPath "{{.PROJECT_NAME}}-{{.DEPLOY_RUNTIME}}.zip" -Force
+      - echo "Created {{.PROJECT_NAME}}-{{.DEPLOY_RUNTIME}}.zip"
 
   deploy:clean:
     desc: Clean publish directory

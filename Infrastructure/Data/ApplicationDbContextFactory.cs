@@ -16,7 +16,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
         // Default connection string for local development
         // Can be overridden via environment variable: CONNECTIONSTRINGS__DEFAULTCONNECTION
         string connectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION")
-                                  ?? "Host=localhost;Database=aspcleanarchitecture;Username=postgres;Password=postgres";
+                                  ?? "Host=localhost;Database=app;Username=postgres;Password=postgres";
 
         optionsBuilder.UseNpgsql(connectionString, npgsqlOptions =>
         {

@@ -9,7 +9,7 @@ $CertDir = Join-Path $RootDir "docker\certs"
 $EnvFile = Join-Path $RootDir ".env"
 
 # Load API_DOMAIN from .env file if it exists
-$ApiDomain = "api.aspclean.localhost"
+$ApiDomain = "api.app.localhost"
 if (Test-Path $EnvFile) {
     $EnvContent = Get-Content $EnvFile | Where-Object { $_ -match "^API_DOMAIN=" }
     if ($EnvContent) {
