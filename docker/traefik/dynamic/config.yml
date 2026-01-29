@@ -35,5 +35,5 @@ http:
 
 tls:
   certificates:
-    - certFile: /etc/traefik/certs/aspclean.localhost.pem
-      keyFile: /etc/traefik/certs/aspclean.localhost-key.pem
+    - certFile: /etc/traefik/certs/local.pem
+      keyFile: /etc/traefik/certs/local-key.pem

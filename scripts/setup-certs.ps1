@@ -48,7 +48,7 @@ mkcert -install
 Write-Host "Generating certificates..." -ForegroundColor Yellow
 Push-Location $CertDir
 try {
-    mkcert -cert-file "$Domain.pem" -key-file "$Domain-key.pem" `
+    mkcert -cert-file "local.pem" -key-file "local-key.pem" `
         $Domain `
         "*.$Domain" `
         "api.$Domain" `
@@ -64,8 +64,8 @@ Write-Host ""
 Write-Host "Certificates generated successfully!" -ForegroundColor Green
 Write-Host "  Location: $CertDir"
 Write-Host "  Files:"
-Write-Host "    - $Domain.pem"
-Write-Host "    - $Domain-key.pem"
+Write-Host "    - local.pem"
+Write-Host "    - local-key.pem"
 
 # Add hosts entry
 $HostsFile = "C:\Windows\System32\drivers\etc\hosts"

@@ -46,7 +46,7 @@ mkcert -install
 # Generate certificates
 echo "Generating certificates..."
 cd "$CERT_DIR"
-mkcert -cert-file "${DOMAIN}.pem" -key-file "${DOMAIN}-key.pem" \
+mkcert -cert-file "local.pem" -key-file "local-key.pem" \
     "${DOMAIN}" \
     "*.${DOMAIN}" \
     "api.${DOMAIN}" \
@@ -58,8 +58,8 @@ echo ""
 echo "Certificates generated successfully!"
 echo "  Location: $CERT_DIR"
 echo "  Files:"
-echo "    - ${DOMAIN}.pem"
-echo "    - ${DOMAIN}-key.pem"
+echo "    - local.pem"
+echo "    - local-key.pem"
 
 # Add hosts entry
 HOSTS_FILE="/etc/hosts"
