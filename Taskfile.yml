@@ -8,15 +8,17 @@ vars:
   INFRA_PROJECT: "Infrastructure"
   MIGRATIONS_DIR: "Data/Migrations"
 
+#if (IncludeTests)
   # Tests
   TEST_DOMAIN: "Tests/Domain.UnitTests"
   TEST_APPLICATION: "Tests/Application.UnitTests"
   TEST_INTEGRATION: "Tests/Web.API.IntegrationTests"
+#endif
 
   # Deploy
   PUBLISH_DIR: "./publish"
   DEPLOY_RUNTIME: '{{default "linux-x64" .DEPLOY_RUNTIME}}'
-  PROJECT_NAME: '{{default "myapp" .PROJECT_NAME}}'
+  PROJECT_NAME: '{{default "aspcleanarchitecture" .PROJECT_NAME}}'
 
 tasks:
   default:
@@ -68,6 +70,7 @@ tasks:
     aliases: [fmt:check]
     cmd: dotnet format --verify-no-changes {{.CLI_ARGS}}
 
+#if (IncludeTests)
   # ============================================================================
   # Testing
   # ============================================================================
@@ -101,6 +104,7 @@ tasks:
     desc: Run tests with coverage
     aliases: [t:c]
     cmd: dotnet test --collect:"XPlat Code Coverage" {{.CLI_ARGS}}
+#endif
 
   # ============================================================================
   # EF Core Migrations
@@ -139,18 +143,19 @@ tasks:
     desc: Open PostgreSQL shell
     cmd: docker compose exec db psql -U postgres -d ${POSTGRES_DB:-app}
 
+#if (IncludeDocker)
   # ============================================================================
   # Docker Development
   # ============================================================================
 
   docker:up:
-    desc: Start dev environment (DB+Redis on Windows/Mac, full stack on Linux)
+    desc: Start dev environment (DB on Windows/Mac, full stack on Linux)
     aliases: [up]
     cmds:
       - task: '{{if eq OS "windows"}}docker:up:infra{{else if eq OS "darwin"}}docker:up:infra{{else}}docker:up:full{{end}}'
 
   docker:up:infra:
-    desc: Start infrastructure only (DB, Redis, Traefik)
+    desc: Start infrastructure only (DB, Traefik)
     aliases: [d:up:infra]
     cmd: docker compose up -d
 
@@ -232,6 +237,7 @@ tasks:
     desc: Build Docker image
     aliases: [p:build]
     cmd: docker build -t {{.PROJECT_NAME}} -f Web.API/Dockerfile .
+#endif
 
   # ============================================================================
   # Deploy (Non-Containerized - for VMs like EC2)
@@ -276,6 +282,7 @@ tasks:
       - '{{if eq OS "windows"}}rmdir /s /q {{.PUBLISH_DIR}}{{else}}rm -rf {{.PUBLISH_DIR}}{{end}}'
     ignore_error: true
 
+#if (IncludeTests)
   # ============================================================================
   # CI/CD Tasks (for GitHub Actions)
   # ============================================================================
@@ -301,7 +308,9 @@ tasks:
   ci:format:
     desc: "[CI] Check formatting"
     cmd: dotnet format --verify-no-changes
+#endif
 
+#if (IncludeExamples)
   # ============================================================================
   # Utilities
   # ============================================================================
@@ -315,12 +324,15 @@ tasks:
     desc: Remove Products example from solution (Windows)
     platforms: [windows]
     cmd: powershell -ExecutionPolicy Bypass -File scripts/remove-products-example.ps1
+#endif
 
   info:
     desc: Show environment info
     cmds:
       - dotnet --info
       - echo "---"
+#if (IncludeDocker)
       - docker --version
       - docker compose version
+#endif
     silent: true

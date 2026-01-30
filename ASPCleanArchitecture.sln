@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{2154DCF1-BA86-4775-9582-4FE494659A52}"
 EndProject
@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.ApiVersioning", "Common.ApiVersioning\Common.ApiVersioning.csproj", "{5D0B3D2E-A229-47CB-94C6-F8696CE29355}"
 EndProject
+#if (IncludeTests)
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.UnitTests", "Tests\Domain.UnitTests\Domain.UnitTests.csproj", "{684E1323-EC52-4ABD-AA74-04957E3919A4}"
@@ -26,6 +27,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application.UnitTests", "Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web.API.IntegrationTests", "Tests\Web.API.IntegrationTests\Web.API.IntegrationTests.csproj", "{7B5CA704-EDC5-48E5-B29C-CD1AEA361580}"
 EndProject
+#endif
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -96,6 +98,7 @@ Global
 		{5D0B3D2E-A229-47CB-94C6-F8696CE29355}.Release|x64.Build.0 = Release|Any CPU
 		{5D0B3D2E-A229-47CB-94C6-F8696CE29355}.Release|x86.ActiveCfg = Release|Any CPU
 		{5D0B3D2E-A229-47CB-94C6-F8696CE29355}.Release|x86.Build.0 = Release|Any CPU
+#if (IncludeTests)
 		{684E1323-EC52-4ABD-AA74-04957E3919A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{684E1323-EC52-4ABD-AA74-04957E3919A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{684E1323-EC52-4ABD-AA74-04957E3919A4}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -132,13 +135,16 @@ Global
 		{7B5CA704-EDC5-48E5-B29C-CD1AEA361580}.Release|x64.Build.0 = Release|Any CPU
 		{7B5CA704-EDC5-48E5-B29C-CD1AEA361580}.Release|x86.ActiveCfg = Release|Any CPU
 		{7B5CA704-EDC5-48E5-B29C-CD1AEA361580}.Release|x86.Build.0 = Release|Any CPU
+#endif
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+#if (IncludeTests)
 	GlobalSection(NestedProjects) = preSolution
 		{684E1323-EC52-4ABD-AA74-04957E3919A4} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{1EF37617-5454-44D6-8B0F-0EDD93437FB1} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{7B5CA704-EDC5-48E5-B29C-CD1AEA361580} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
+#endif
 EndGlobal

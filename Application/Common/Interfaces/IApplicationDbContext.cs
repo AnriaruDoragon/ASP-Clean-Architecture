@@ -22,8 +22,10 @@ public interface IApplicationDbContext
     public DbSet<PasswordResetToken> PasswordResetTokens { get; }
     public DbSet<EmailVerificationToken> EmailVerificationTokens { get; }
 
+#if IncludeExamples
     // Example
     public DbSet<Product> Products { get; }
+#endif
 
     /// <summary>
     /// Saves all changes made in this context to the database.

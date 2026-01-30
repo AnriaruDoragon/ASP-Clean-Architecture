@@ -1,12 +1,14 @@
 # Docker Compose with Profile-based Architecture
 #
 # Profiles:
-#   - (default):  Infrastructure only - db, redis, traefik proxying to host
-#   - full:       Infrastructure + API container with hot-reload
-#   - prod:       Production stack with Nginx
+#   - (default):  Infrastructure only - db, traefik proxying to host
+#   - cache:      Add Redis for caching (set CACHING__PROVIDER=Redis in .env)
+#   - full:       Infrastructure + Redis + API container with hot-reload
+#   - prod:       Production stack with Redis + Nginx
 #
 # Usage:
-#   docker compose up                     # Default: DB + Redis + Traefik (API runs locally)
+#   docker compose up                     # Default: DB + Traefik (API runs locally)
+#   docker compose --profile cache up     # Default + Redis caching
 #   docker compose --profile full up      # Full: DB + Redis + Traefik + API container
 #   docker compose --profile prod up      # Production: DB + Redis + API + Nginx
 #
@@ -64,7 +66,7 @@ services:
     profiles: ["prod"]
 
   # =============================================================================
-  # Redis - Development (default and full profiles)
+  # Redis - Development (cache and full profiles only)
   # =============================================================================
   redis:
     image: redis:8-alpine
@@ -78,6 +80,7 @@ services:
       retries: 3
     networks:
       - app-network
+    profiles: ["cache", "full"]
 
   # =============================================================================
   # Redis - Production (prod profile only)
@@ -94,7 +97,7 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    profiles: ["prod"]
+    profiles: ["cache", "prod"]
 
   # =============================================================================
   # Traefik - Development reverse proxy (default and full profiles)
@@ -138,7 +141,7 @@ services:
       - JWT__ISSUER=${JWT__ISSUER:-MyApp}
       - JWT__AUDIENCE=${JWT__AUDIENCE:-MyApp}
       - CACHING__ENABLED=${CACHING__ENABLED:-true}
-      - CACHING__PROVIDER=Redis
+      - CACHING__PROVIDER=${CACHING__PROVIDER:-Memory}
       - CACHING__REDIS__CONNECTIONSTRING=redis:6379
     volumes:
       - .:/src
@@ -147,8 +150,6 @@ services:
       - "8080"
     depends_on:
       db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - app-network
@@ -180,14 +181,12 @@ services:
       - JWT__REFRESHTOKENEXPIRATIONDAYS=${JWT__REFRESHTOKENEXPIRATIONDAYS:-7}
       - CORS__ALLOWEDORIGINS=${CORS__ALLOWEDORIGINS:-}
       - CACHING__ENABLED=${CACHING__ENABLED:-true}
-      - CACHING__PROVIDER=Redis
+      - CACHING__PROVIDER=${CACHING__PROVIDER:-Redis}
       - CACHING__REDIS__CONNECTIONSTRING=redis-prod:6379
     expose:
       - "8080"
     depends_on:
       db-prod:
-        condition: service_healthy
-      redis-prod:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health/live || exit 1"]
