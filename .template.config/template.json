@@ -1,0 +1,272 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Anriaru Doragon",
+  "classifications": [
+    "Web",
+    "API",
+    "ASP.NET Core",
+    "Clean Architecture",
+    "CQRS"
+  ],
+  "identity": "AnriaruDoragon.Template.ASPCleanArchitecture",
+  "name": "ASP.NET Clean Architecture Solution",
+  "shortName": "aspclean",
+  "description": "A production-ready ASP.NET Core Web API using Clean Architecture with CQRS, JWT authentication, PostgreSQL, Redis caching, and Docker support.",
+  "sourceName": "ASPCleanArchitecture",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "symbols": {
+    "IncludeExamples": {
+      "displayName": "Include Product Examples",
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include Products CRUD example to demonstrate the architecture patterns"
+    },
+    "IncludeDocker": {
+      "displayName": "Include Docker Compose",
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include Docker and Docker Compose files for containerized development"
+    },
+    "IncludeTests": {
+      "displayName": "Include Tests",
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include unit and integration test projects"
+    },
+    "projectNameLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "name",
+        "toLower": true
+      },
+      "replaces": "aspcleanarchitecture"
+    },
+    "guid1": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "2154DCF1-BA86-4775-9582-4FE494659A52",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid2": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "F79CB8A6-B454-402D-BA15-5129C3DD4399",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid3": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "316467DC-D579-4B27-A0D3-FB9B69B1C353",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid4": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "33240BCA-2F23-41A9-9335-0F74F29D8DAE",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid5": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "75DEBE8C-A64D-4B3E-B801-0ECB4A2E1B77",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid6": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "5D0B3D2E-A229-47CB-94C6-F8696CE29355",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid7": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "0AB3BF05-4346-4AA6-1389-037BE0695223",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid8": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "684E1323-EC52-4ABD-AA74-04957E3919A4",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid9": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "1EF37617-5454-44D6-8B0F-0EDD93437FB1",
+      "parameters": {
+        "format": "D"
+      }
+    },
+    "guid10": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "7B5CA704-EDC5-48E5-B29C-CD1AEA361580",
+      "parameters": {
+        "format": "D"
+      }
+    }
+  },
+  "primaryOutputs": [
+    {
+      "path": "ASPCleanArchitecture.sln"
+    }
+  ],
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!IncludeExamples)",
+          "exclude": [
+            "Domain/Entities/Product.cs",
+            "Domain/Events/ProductCreatedEvent.cs",
+            "Domain/Events/ProductDeletedEvent.cs",
+            "Domain/Events/ProductOutOfStockEvent.cs",
+            "Application/Features/Products/**",
+            "Infrastructure/Data/Configs/ProductConfiguration.cs",
+            "Web.API/Controllers/V1/ProductsController.cs",
+            "Tests/Domain.UnitTests/Entities/ProductTests.cs",
+            "Tests/Application.UnitTests/Features/Products/**",
+            "Tests/Web.API.IntegrationTests/ProductsControllerTests.cs",
+            "scripts/remove-products-example.ps1",
+            "scripts/remove-products-example.sh"
+          ]
+        },
+        {
+          "condition": "(!IncludeDocker)",
+          "exclude": [
+            "compose.yaml",
+            "docker/**",
+            "Web.API/Dockerfile",
+            ".dockerignore",
+            "scripts/setup-certs.ps1",
+            "scripts/setup-certs.sh"
+          ]
+        },
+        {
+          "condition": "(!IncludeTests)",
+          "exclude": [
+            "Tests/**"
+          ]
+        },
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "**/.vs/**",
+            ".claude/**",
+            ".git/**",
+            "*.user",
+            ".env",
+            "Infrastructure/Data/Migrations/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "postActions": [
+    {
+      "id": "restore",
+      "description": "Restore NuGet packages",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    },
+    {
+      "id": "copy-env-windows",
+      "condition": "(OS == \"Windows_NT\")",
+      "description": "Create .env file from template",
+      "manualInstructions": [
+        {
+          "text": "Run 'copy .env.example .env'"
+        }
+      ],
+      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
+      "args": {
+        "executable": "cmd",
+        "args": "/c copy .env.example .env"
+      },
+      "continueOnError": true
+    },
+    {
+      "id": "copy-env-unix",
+      "condition": "(OS != \"Windows_NT\")",
+      "description": "Create .env file from template",
+      "manualInstructions": [
+        {
+          "text": "Run 'cp .env.example .env'"
+        }
+      ],
+      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
+      "args": {
+        "executable": "/bin/sh",
+        "args": "-c \"cp .env.example .env\""
+      },
+      "continueOnError": true
+    },
+    {
+      "id": "create-migration",
+      "description": "Create initial EF Core migration",
+      "manualInstructions": [
+        {
+          "text": "Run 'task migration:add -- Init' or 'dotnet ef migrations add Init --project Infrastructure --startup-project Web.API --output-dir Data/Migrations'"
+        }
+      ],
+      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
+      "args": {
+        "executable": "dotnet",
+        "args": "ef migrations add Init --project Infrastructure --startup-project Web.API --output-dir Data/Migrations"
+      },
+      "continueOnError": true
+    },
+    {
+      "id": "instructions",
+      "condition": "(IncludeDocker)",
+      "description": "Next steps",
+      "manualInstructions": [
+        {
+          "text": "Next steps:\n1. (Optional) Setup HTTPS: task certs:setup:windows (or task certs:setup)\n2. (Optional) Add to hosts: 127.0.0.1 api.app.localhost\n3. Start: task docker:up"
+        }
+      ],
+      "actionId": "AC1156F7-BB77-4DB8-B28F-24EEBCCA1E5C"
+    },
+    {
+      "id": "instructions-no-docker",
+      "condition": "(!IncludeDocker)",
+      "description": "Next steps",
+      "manualInstructions": [
+        {
+          "text": "Next steps:\n1. Configure database in .env\n2. Apply migrations: task db:update\n3. Run: task run"
+        }
+      ],
+      "actionId": "AC1156F7-BB77-4DB8-B28F-24EEBCCA1E5C"
+    }
+  ]
+}

@@ -78,7 +78,7 @@ public static class DependencyInjection
 
         // Register Caching
         services.Configure<CacheSettings>(configuration.GetSection(CacheSettings.SectionName));
-        var cacheSettings = configuration.GetSection(CacheSettings.SectionName).Get<CacheSettings>();
+        CacheSettings? cacheSettings = configuration.GetSection(CacheSettings.SectionName).Get<CacheSettings>();
 
         if (cacheSettings?.Enabled == true)
         {

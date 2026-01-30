@@ -8,6 +8,74 @@
 
 A production-ready ASP.NET Core 10.0 template implementing Clean Architecture with CQRS pattern.
 
+## Using as Template
+
+### Installation
+
+```bash
+# Install from GitHub
+dotnet new install https://github.com/AnriaruDoragon/ASP-Clean-Architecture
+
+# Or install from local clone
+git clone https://github.com/AnriaruDoragon/ASP-Clean-Architecture
+dotnet new install ./ASPCleanArchitecture
+```
+
+### Create a New Project
+
+```bash
+# Default: all features included (with auto-setup)
+dotnet new cleanarch -n MyApp --allow-scripts yes
+
+# Without auto-setup (manual post-creation steps)
+dotnet new cleanarch -n MyApp
+
+# Without Docker files
+dotnet new cleanarch -n MyApp --IncludeDocker false --allow-scripts yes
+
+# Without example Product feature
+dotnet new cleanarch -n MyApp --IncludeExamples false --allow-scripts yes
+
+# Minimal: no examples, no docker, no tests
+dotnet new cleanarch -n MyApp --IncludeExamples false --IncludeDocker false --IncludeTests false --allow-scripts yes
+```
+
+> **Note:** `--allow-scripts yes` automatically runs post-creation scripts (restore, copy .env, create migration). Without it, you'll be prompted to confirm each action or can run them manually.
+
+### Template Parameters
+
+| Parameter           | Default | Description                   |
+|---------------------|---------|-------------------------------|
+| `--IncludeExamples` | `true`  | Include Products CRUD example |
+| `--IncludeDocker`   | `true`  | Include Docker/compose files  |
+| `--IncludeTests`    | `true`  | Include test projects         |
+
+### After Creating a Project
+
+With `--allow-scripts yes`, steps 1-3 run automatically.
+
+```bash
+cd MyApp
+
+# 1. Setup environment (auto)
+cp .env.example .env
+
+# 2. Restore packages (auto)
+task restore
+
+# 3. Create initial migration (auto)
+task migration:add -- Init
+
+# 4. (Optional) Setup local HTTPS
+task certs:setup:windows  # Windows
+task certs:setup          # Linux/Mac
+
+# 5. Start development
+task docker:up
+```
+
+---
+
 ## Quick Start
 
 ```bash
@@ -15,7 +83,7 @@ A production-ready ASP.NET Core 10.0 template implementing Clean Architecture wi
 cp .env.example .env
 
 # 2. Start development environment
-task docker:up            # Windows/Mac: DB+Redis+Traefik, Linux: full stack
+task docker:up            # Windows/Mac: DB+Traefik, Linux: full stack
 task watch                # Run API locally (Windows/Mac)
 
 # Access: http://localhost:5141
@@ -29,6 +97,15 @@ task certs:setup:windows  # Windows (run as Administrator)
 task certs:setup          # Linux/Mac (uses sudo)
 
 # Access: https://api.app.localhost
+```
+
+**Optional: Redis caching**
+```bash
+# Enable Redis in .env
+CACHING__PROVIDER=Redis
+
+# Start with Redis profile
+docker compose --profile cache up -d
 ```
 
 ## Development Setup
@@ -70,12 +147,24 @@ task docker:up   # Starts full stack including API container
 
 **Development Endpoints:**
 
-| Endpoint          | URL                                                     |
-|-------------------|---------------------------------------------------------|
-| API (direct)      | http://localhost:5141                                   |
-| API (via Traefik) | https://api.app.localhost *(requires hosts entry)* |
-| Scalar API docs   | http://localhost:5141/scalar/v1                         |
-| Traefik Dashboard | http://localhost:8080                                   |
+| Endpoint          | URL                                                 |
+|-------------------|-----------------------------------------------------|
+| API (direct)      | http://localhost:5141                               |
+| API (via Traefik) | https://api.app.localhost *(requires hosts entry)*  |
+| Scalar API docs   | http://localhost:5141/scalar/v1                     |
+| Traefik Dashboard | http://localhost:8080                               |
+
+### Redis Caching (Optional)
+
+Redis is available but not started by default. To enable:
+
+```bash
+# Set in .env
+CACHING__PROVIDER=Redis
+
+# Start with cache profile
+docker compose --profile cache up -d
+```
 
 ### Docker Commands
 
@@ -101,7 +190,7 @@ task prod:down   # Stop
 
 **Production services:**
 - **PostgreSQL 18** - Database (internal only)
-- **Redis 8** - Distributed caching (internal only)
+- **Redis 8** - Distributed caching (internal only, optional)
 - **API** - ASP.NET Core application
 - **Nginx** - Reverse proxy with HTTPS
 
@@ -188,7 +277,7 @@ task test:coverage      # Tests with coverage
 # Database
 task migration:add -- Name    # Create migration
 task db:update                # Apply migrations
-task db:shell                 # PostgreSQL shell
+task db:shell                 # Database shell
 
 # Utilities
 task format             # Format code
@@ -604,7 +693,7 @@ public sealed record OrderShippedEvent(Guid OrderId) : IDomainEvent
 }
 ```
 
-2. Raise from entity:
+1. Raise from entity:
 ```csharp
 public void Ship()
 {
@@ -613,7 +702,7 @@ public void Ship()
 }
 ```
 
-3. Create handler in `Application/Features/<Feature>/Events/`:
+1. Create handler in `Application/Features/<Feature>/Events/`:
 ```csharp
 public sealed class OrderShippedEventHandler
     : INotificationHandler<DomainEventNotification<OrderShippedEvent>>

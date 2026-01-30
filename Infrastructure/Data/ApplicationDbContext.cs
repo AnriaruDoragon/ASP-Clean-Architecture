@@ -33,8 +33,10 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IUnitOfWor
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
 
+#if IncludeExamples
     // Example
     public DbSet<Product> Products => Set<Product>();
+#endif
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
