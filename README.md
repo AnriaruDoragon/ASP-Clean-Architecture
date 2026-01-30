@@ -13,10 +13,7 @@ A production-ready ASP.NET Core 10.0 template implementing Clean Architecture wi
 ### Installation
 
 ```bash
-# Install from GitHub
-dotnet new install https://github.com/AnriaruDoragon/ASP-Clean-Architecture
-
-# Or install from local clone
+# Install from local clone
 git clone https://github.com/AnriaruDoragon/ASP-Clean-Architecture
 dotnet new install ./ASPCleanArchitecture
 ```
