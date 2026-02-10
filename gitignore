@@ -1,0 +1,31 @@
+# >>> Editors
+.idea/
+.run/
+.vs/
+.vscode/
+riderModule.iml
+/_ReSharper.Caches/
+*.sln.DotSettings.user
+# <<< Editors
+
+# >>> Runtime
+bin/
+obj/
+dir/
+/packages/
+# <<< Runtime
+
+# >>> Configurations
+.env*
+!*.example
+# <<< Configurations
+
+# >>> Docker
+docker/certs/
+# <<< Docker
+
+# >>> Deploy artifacts
+publish/
+*.tar.gz
+*.zip
+# <<< Deploy artifacts

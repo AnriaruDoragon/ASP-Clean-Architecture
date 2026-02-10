@@ -64,6 +64,8 @@ app.UseSecurityHeaders();
 app.UseCorrelationId();
 app.UseRequestLogging();
 
+app.UseCors();
+
 if (app.Environment.IsDevelopment())
 {
     // Enable Scalar UI for OpenApi
@@ -72,8 +74,6 @@ if (app.Environment.IsDevelopment())
 
 // Conditional HTTPS based on configuration
 app.UseConditionalHttpsRedirection(app.Configuration);
-
-app.UseCors();
 app.UseRateLimiter();
 
 // Handle API versions lifecycle

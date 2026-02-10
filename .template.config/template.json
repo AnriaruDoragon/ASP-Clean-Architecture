@@ -137,6 +137,9 @@
   ],
   "sources": [
     {
+      "rename": {
+        "gitignore": ".gitignore"
+      },
       "modifiers": [
         {
           "condition": "(!IncludeExamples)",
@@ -179,6 +182,7 @@
             "**/.vs/**",
             ".claude/**",
             ".git/**",
+            ".gitignore",
             "*.user",
             ".env",
             "Infrastructure/Data/Migrations/**"

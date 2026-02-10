@@ -18,8 +18,9 @@ public sealed class ForgotPasswordCommandHandler(
     public async Task<Result> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
         // Always return success to prevent email enumeration
+        string normalizedEmail = request.Email.ToLowerInvariant();
         User? user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.InvariantCultureIgnoreCase), cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
 
         if (user is null)
         {
