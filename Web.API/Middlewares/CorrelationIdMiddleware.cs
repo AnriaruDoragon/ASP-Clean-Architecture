@@ -13,8 +13,8 @@ public class CorrelationIdMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context)
     {
         // Get correlation ID from header or generate new one
-        string correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault()
-            ?? Guid.NewGuid().ToString();
+        string correlationId =
+            context.Request.Headers[CorrelationIdHeader].FirstOrDefault() ?? Guid.NewGuid().ToString();
 
         // Store in HttpContext.Items for access throughout request
         context.Items["CorrelationId"] = correlationId;

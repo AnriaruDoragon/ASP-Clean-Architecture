@@ -18,7 +18,11 @@ namespace Common.ApiVersioning.OpenApi;
 public sealed class FluentValidationSchemaTransformer(IServiceProvider serviceProvider) : IOpenApiSchemaTransformer
 {
     /// <inheritdoc />
-    public Task TransformAsync(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken cancellationToken)
+    public Task TransformAsync(
+        OpenApiSchema schema,
+        OpenApiSchemaTransformerContext context,
+        CancellationToken cancellationToken
+    )
     {
         Type validatorType = typeof(IValidator<>).MakeGenericType(context.JsonTypeInfo.Type);
 
@@ -29,18 +33,26 @@ public sealed class FluentValidationSchemaTransformer(IServiceProvider servicePr
 
         IValidatorDescriptor descriptor = validator.CreateDescriptor();
 
-        foreach (IGrouping<string, (IPropertyValidator Validator, IRuleComponent Options)> member in descriptor.GetMembersWithValidators())
+        foreach (
+            IGrouping<
+                string,
+                (IPropertyValidator Validator, IRuleComponent Options)
+            > member in descriptor.GetMembersWithValidators()
+        )
         {
             string propertyName = FluentValidationRuleMapper.ToCamelCase(member.Key);
 
-            if (schema.Properties is null || !schema.Properties.TryGetValue(propertyName, out IOpenApiSchema? propertySchema))
+            if (
+                schema.Properties is null
+                || !schema.Properties.TryGetValue(propertyName, out IOpenApiSchema? propertySchema)
+            )
                 continue;
 
             OpenApiSchema? concreteSchema = propertySchema switch
             {
                 OpenApiSchema s => s,
                 OpenApiSchemaReference { Target: OpenApiSchema target } => target,
-                _ => null
+                _ => null,
             };
 
             if (concreteSchema is null)
@@ -51,7 +63,8 @@ public sealed class FluentValidationSchemaTransformer(IServiceProvider servicePr
                 FluentValidationRuleMapper.ApplyRule(
                     concreteSchema,
                     propertyValidator,
-                    markRequired: () => schema.Required?.Add(propertyName));
+                    markRequired: () => schema.Required?.Add(propertyName)
+                );
             }
         }
 

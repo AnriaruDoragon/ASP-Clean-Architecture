@@ -14,25 +14,31 @@ public sealed class MemoryCacheService(IMemoryCache cache, IOptions<CacheSetting
     private readonly CacheSettings _settings = settings.Value;
     private readonly ConcurrentDictionary<string, byte> _keys = new();
 
-    public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) where T : class
+    public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+        where T : class
     {
         T? value = cache.Get<T>(key);
         return Task.FromResult(value);
     }
 
-    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default) where T : class
+    public Task SetAsync<T>(
+        string key,
+        T value,
+        TimeSpan? expiration = null,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
     {
         TimeSpan cacheExpiration = expiration ?? TimeSpan.FromMinutes(_settings.DefaultExpirationMinutes);
 
-        var options = new MemoryCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = cacheExpiration
-        };
+        var options = new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = cacheExpiration };
 
-        options.RegisterPostEvictionCallback((evictedKey, _, _, _) =>
-        {
-            _keys.TryRemove(evictedKey.ToString()!, out _);
-        });
+        options.RegisterPostEvictionCallback(
+            (evictedKey, _, _, _) =>
+            {
+                _keys.TryRemove(evictedKey.ToString()!, out _);
+            }
+        );
 
         cache.Set(key, value, options);
         _keys.TryAdd(key, 0);
@@ -51,7 +57,8 @@ public sealed class MemoryCacheService(IMemoryCache cache, IOptions<CacheSetting
     {
         var regex = new Regex(
             "^" + Regex.Escape(pattern).Replace("\\*", ".*") + "$",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            RegexOptions.Compiled | RegexOptions.IgnoreCase
+        );
 
         var keysToRemove = _keys.Keys.Where(k => regex.IsMatch(k)).ToList();
 

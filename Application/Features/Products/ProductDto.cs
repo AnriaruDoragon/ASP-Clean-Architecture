@@ -10,4 +10,5 @@ public sealed record ProductDto(
     decimal Price,
     int StockQuantity,
     bool IsActive,
-    DateTime CreatedAt);
+    DateTime CreatedAt
+);

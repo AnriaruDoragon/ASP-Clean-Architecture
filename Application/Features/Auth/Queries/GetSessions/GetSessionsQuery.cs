@@ -16,4 +16,5 @@ public sealed record SessionDto(
     string? UserAgent,
     DateTime CreatedAt,
     DateTime ExpiresAt,
-    bool IsCurrent);
+    bool IsCurrent
+);

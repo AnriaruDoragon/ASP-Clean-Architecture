@@ -9,11 +9,10 @@ namespace Application.Features.Auth.Commands.RefreshToken;
 public sealed class RefreshTokenCommandHandler(
     IApplicationDbContext context,
     IJwtService jwtService,
-    IDateTimeProvider dateTimeProvider) : ICommandHandler<RefreshTokenCommand, AuthTokens>
+    IDateTimeProvider dateTimeProvider
+) : ICommandHandler<RefreshTokenCommand, AuthTokens>
 {
-    public async Task<Result<AuthTokens>> Handle(
-        RefreshTokenCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Result<AuthTokens>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         // Get user ID from expired access token
         Guid? userId = jwtService.GetUserIdFromToken(request.AccessToken);
@@ -22,15 +21,18 @@ public sealed class RefreshTokenCommandHandler(
             return Result.Failure<AuthTokens>(Error.Unauthorized("Auth.InvalidToken", "Invalid access token."));
 
         // Find the refresh token
-        Domain.Entities.RefreshToken? refreshToken = await context.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && rt.UserId == userId, cancellationToken);
+        Domain.Entities.RefreshToken? refreshToken = await context.RefreshTokens.FirstOrDefaultAsync(
+            rt => rt.Token == request.RefreshToken && rt.UserId == userId,
+            cancellationToken
+        );
 
         if (refreshToken is null || !refreshToken.IsValid)
-            return Result.Failure<AuthTokens>(Error.Unauthorized("Auth.InvalidRefreshToken", "Invalid or expired refresh token."));
+            return Result.Failure<AuthTokens>(
+                Error.Unauthorized("Auth.InvalidRefreshToken", "Invalid or expired refresh token.")
+            );
 
         // Get user
-        User? user = await context.Users
-            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
         if (user is null)
             return Result.Failure<AuthTokens>(Error.Unauthorized("Auth.UserNotFound", "User not found."));
@@ -45,7 +47,8 @@ public sealed class RefreshTokenCommandHandler(
             newRefreshTokenValue,
             dateTimeProvider.UtcNow.AddDays(7),
             refreshToken.DeviceName,
-            refreshToken.UserAgent);
+            refreshToken.UserAgent
+        );
 
         context.RefreshTokens.Add(newRefreshToken);
         await context.SaveChangesAsync(cancellationToken);
@@ -53,9 +56,6 @@ public sealed class RefreshTokenCommandHandler(
         // Generate new access token
         string accessToken = jwtService.GenerateAccessToken(user);
 
-        return new AuthTokens(
-            accessToken,
-            newRefreshTokenValue,
-            dateTimeProvider.UtcNow.AddMinutes(15));
+        return new AuthTokens(accessToken, newRefreshTokenValue, dateTimeProvider.UtcNow.AddMinutes(15));
     }
 }

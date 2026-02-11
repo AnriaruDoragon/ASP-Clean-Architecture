@@ -19,13 +19,12 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
                 return null;
 
             // Try standard claim types (JWT uses "sub", ASP.NET uses NameIdentifier)
-            string? claim = user.FindFirstValue(ClaimTypes.NameIdentifier)
-                            ?? user.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            string? claim =
+                user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
             return Guid.TryParse(claim, out Guid id) ? id : null;
         }
     }
 
-    public bool IsAuthenticated =>
-        httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+    public bool IsAuthenticated => httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false;
 }

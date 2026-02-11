@@ -17,7 +17,8 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         string requestName = typeof(TRequest).Name;
 
@@ -34,7 +35,8 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
             logger.LogInformation(
                 "Handled {RequestName} in {ElapsedMilliseconds}ms",
                 requestName,
-                stopwatch.ElapsedMilliseconds);
+                stopwatch.ElapsedMilliseconds
+            );
 
             return response;
         }
@@ -46,7 +48,8 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
                 ex,
                 "Error handling {RequestName} after {ElapsedMilliseconds}ms",
                 requestName,
-                stopwatch.ElapsedMilliseconds);
+                stopwatch.ElapsedMilliseconds
+            );
 
             throw;
         }

@@ -12,15 +12,15 @@ namespace Web.API.Authorization.Handlers;
 /// Handles role-based authorization by checking roles in the database.
 /// This ensures role changes take effect immediately (not cached in JWT).
 /// </summary>
-public sealed class RoleAuthorizationHandler(
-    IServiceScopeFactory scopeFactory) : AuthorizationHandler<RoleRequirement>
+public sealed class RoleAuthorizationHandler(IServiceScopeFactory scopeFactory) : AuthorizationHandler<RoleRequirement>
 {
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
-        RoleRequirement requirement)
+        RoleRequirement requirement
+    )
     {
-        Claim? userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)
-                             ?? context.User.FindFirst(JwtRegisteredClaimNames.Sub);
+        Claim? userIdClaim =
+            context.User.FindFirst(ClaimTypes.NameIdentifier) ?? context.User.FindFirst(JwtRegisteredClaimNames.Sub);
 
         if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
         {
@@ -32,9 +32,7 @@ public sealed class RoleAuthorizationHandler(
         using IServiceScope scope = scopeFactory.CreateScope();
         IApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
-        User? user = await dbContext.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == userId);
+        User? user = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user is null)
         {

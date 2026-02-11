@@ -31,7 +31,7 @@ public sealed class User : AuditableEntity, IAggregateRoot
             Id = Guid.NewGuid(),
             Email = email.ToLowerInvariant(),
             PasswordHash = passwordHash,
-            EmailVerified = false
+            EmailVerified = false,
         };
 
         user._roles.Add(initialRole);

@@ -23,8 +23,8 @@ public class Repository<T>(ApplicationDbContext context) : IRepository<T>
 
     public virtual async Task<IReadOnlyList<T>> FindAsync(
         Expression<Func<T, bool>> predicate,
-        CancellationToken cancellationToken = default) =>
-        await DbSet.Where(predicate).ToListAsync(cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => await DbSet.Where(predicate).ToListAsync(cancellationToken);
 
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
@@ -32,20 +32,19 @@ public class Repository<T>(ApplicationDbContext context) : IRepository<T>
         return entity;
     }
 
-    public virtual void Update(T entity) =>
-        DbSet.Update(entity);
+    public virtual void Update(T entity) => DbSet.Update(entity);
 
-    public virtual void Delete(T entity) =>
-        DbSet.Remove(entity);
+    public virtual void Delete(T entity) => DbSet.Remove(entity);
 
     public virtual async Task<bool> AnyAsync(
         Expression<Func<T, bool>> predicate,
-        CancellationToken cancellationToken = default) =>
-        await DbSet.AnyAsync(predicate, cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => await DbSet.AnyAsync(predicate, cancellationToken);
 
     public virtual async Task<int> CountAsync(
         Expression<Func<T, bool>>? predicate = null,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken = default
+    ) =>
         predicate is null
             ? await DbSet.CountAsync(cancellationToken)
             : await DbSet.CountAsync(predicate, cancellationToken);

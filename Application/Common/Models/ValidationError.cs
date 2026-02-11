@@ -13,6 +13,5 @@ public sealed record ValidationError : Error
         Errors = errors;
     }
 
-    public static ValidationError FromDictionary(IDictionary<string, string[]> errors)
-        => new(errors.AsReadOnly());
+    public static ValidationError FromDictionary(IDictionary<string, string[]> errors) => new(errors.AsReadOnly());
 }

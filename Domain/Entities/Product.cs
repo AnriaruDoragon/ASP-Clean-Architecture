@@ -45,7 +45,7 @@ public class Product : AuditableEntity, IAggregateRoot
             Description = description,
             Price = price,
             StockQuantity = stockQuantity,
-            IsActive = true
+            IsActive = true,
         };
 
         product.AddDomainEvent(new ProductCreatedEvent(product.Id, product.Name));

@@ -40,7 +40,8 @@ public static class FluentValidationRuleMapper
     public static void ApplyRule(
         OpenApiSchema propertySchema,
         IPropertyValidator propertyValidator,
-        Action? markRequired = null)
+        Action? markRequired = null
+    )
     {
         switch (propertyValidator)
         {
@@ -96,30 +97,40 @@ public static class FluentValidationRuleMapper
                 break;
 
             // Equal / NotEqual
-            case not null when propertyValidator.GetType().Name.Contains("EqualValidator")
-                             && TryGetPropertyValue<object>(propertyValidator, "ValueToCompare", out var eqVal):
-                AppendDescription(propertySchema,
+            case not null
+                when propertyValidator.GetType().Name.Contains("EqualValidator")
+                    && TryGetPropertyValue<object>(propertyValidator, "ValueToCompare", out var eqVal):
+                AppendDescription(
+                    propertySchema,
                     propertyValidator.GetType().Name.Contains("NotEqual")
                         ? $"Must not equal: {eqVal}"
-                        : $"Must equal: {eqVal}");
+                        : $"Must equal: {eqVal}"
+                );
                 break;
 
             // ScalePrecision
-            case not null when TryGetPropertyValue<int>(propertyValidator, "Scale", out int scale)
-                             && TryGetPropertyValue<int>(propertyValidator, "Precision", out int precision):
+            case not null
+                when TryGetPropertyValue(propertyValidator, "Scale", out int scale)
+                    && TryGetPropertyValue(propertyValidator, "Precision", out int precision):
                 AppendDescription(propertySchema, $"Max {scale} decimal places, {precision} digits total");
                 break;
 
             // File validators (detected via reflection to avoid coupling to Application layer)
-            case not null when TryGetPropertyValue<long>(propertyValidator, "MaxSizeInBytes", out long maxSize):
+            case not null when TryGetPropertyValue(propertyValidator, "MaxSizeInBytes", out long maxSize):
                 AppendDescription(propertySchema, $"Max file size: {FormatFileSize(maxSize)}");
                 break;
 
-            case not null when TryGetPropertyValue<IReadOnlyList<string>>(propertyValidator, "ContentTypes", out var contentTypes):
+            case not null
+                when TryGetPropertyValue<IReadOnlyList<string>>(
+                    propertyValidator,
+                    "ContentTypes",
+                    out var contentTypes
+                ):
                 AppendDescription(propertySchema, $"Allowed types: {string.Join(", ", contentTypes)}");
                 break;
 
-            case not null when TryGetPropertyValue<IReadOnlyList<string>>(propertyValidator, "Extensions", out var extensions):
+            case not null
+                when TryGetPropertyValue<IReadOnlyList<string>>(propertyValidator, "Extensions", out var extensions):
                 AppendDescription(propertySchema, $"Allowed extensions: {string.Join(", ", extensions)}");
                 break;
         }
@@ -139,7 +150,8 @@ public static class FluentValidationRuleMapper
     private static void ApplyComparisonRule(
         OpenApiSchema schema,
         IComparisonValidator comparisonValidator,
-        IConvertible convertible)
+        IConvertible convertible
+    )
     {
         string value = Convert.ToDecimal(convertible).ToString(CultureInfo.InvariantCulture);
 
@@ -220,17 +232,19 @@ public static class FluentValidationRuleMapper
             return false;
 
         object? raw = prop.GetValue(obj);
-        if (raw is not TValue typed) return false;
+        if (raw is not TValue typed)
+            return false;
 
         value = typed;
         return true;
     }
 
-    private static string FormatFileSize(long bytes) => bytes switch
-    {
-        >= 1_073_741_824 => $"{bytes / 1_073_741_824.0:F1} GB",
-        >= 1_048_576 => $"{bytes / 1_048_576.0:F1} MB",
-        >= 1_024 => $"{bytes / 1_024.0:F1} KB",
-        _ => $"{bytes} bytes"
-    };
+    private static string FormatFileSize(long bytes) =>
+        bytes switch
+        {
+            >= 1_073_741_824 => $"{bytes / 1_073_741_824.0:F1} GB",
+            >= 1_048_576 => $"{bytes / 1_048_576.0:F1} MB",
+            >= 1_024 => $"{bytes / 1_024.0:F1} KB",
+            _ => $"{bytes} bytes",
+        };
 }

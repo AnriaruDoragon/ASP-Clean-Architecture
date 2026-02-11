@@ -12,13 +12,20 @@ public sealed class NullEmailService : IEmailService
     {
         // TODO: Implement email sending
         throw new NotImplementedException(
-            "Email service not configured. Implement IEmailService with your preferred email provider.");
+            "Email service not configured. Implement IEmailService with your preferred email provider."
+        );
     }
 
-    public Task SendTemplateAsync(string templateName, EmailMessage message, object model, CancellationToken cancellationToken = default)
+    public Task SendTemplateAsync(
+        string templateName,
+        EmailMessage message,
+        object model,
+        CancellationToken cancellationToken = default
+    )
     {
         // TODO: Implement template-based email sending
         throw new NotImplementedException(
-            "Email service not configured. Implement IEmailService with your preferred email provider.");
+            "Email service not configured. Implement IEmailService with your preferred email provider."
+        );
     }
 }

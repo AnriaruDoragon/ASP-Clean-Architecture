@@ -6,7 +6,6 @@ public sealed class GetProductByIdQueryValidator : AbstractValidator<GetProductB
 {
     public GetProductByIdQueryValidator()
     {
-        RuleFor(x => x.Id)
-            .NotEmpty().WithMessage("Product ID is required.");
+        RuleFor(x => x.Id).NotEmpty().WithMessage("Product ID is required.");
     }
 }

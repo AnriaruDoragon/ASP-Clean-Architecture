@@ -13,7 +13,12 @@ public interface IEmailService
     /// <summary>
     /// Sends an email using a template.
     /// </summary>
-    public Task SendTemplateAsync(string templateName, EmailMessage message, object model, CancellationToken cancellationToken = default);
+    public Task SendTemplateAsync(
+        string templateName,
+        EmailMessage message,
+        object model,
+        CancellationToken cancellationToken = default
+    );
 }
 
 /// <summary>

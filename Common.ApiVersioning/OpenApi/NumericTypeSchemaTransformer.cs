@@ -21,7 +21,8 @@ public sealed class NumericTypeSchemaTransformer : IOpenApiSchemaTransformer
     public Task TransformAsync(
         OpenApiSchema schema,
         OpenApiSchemaTransformerContext context,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         // Fix the schema itself (e.g., a standalone int parameter)
         FixNumericType(schema);
@@ -71,7 +72,7 @@ public sealed class NumericTypeSchemaTransformer : IOpenApiSchemaTransformer
         {
             "int32" or "int64" => JsonSchemaType.Integer,
             "float" or "double" or "decimal" => JsonSchemaType.Number,
-            _ => null
+            _ => null,
         };
 
         if (numericType is null)
@@ -83,8 +84,6 @@ public sealed class NumericTypeSchemaTransformer : IOpenApiSchemaTransformer
             return;
 
         // Keep only the numeric type + Null flag (for nullable properties)
-        schema.Type = type.HasFlag(JsonSchemaType.Null)
-            ? numericType.Value | JsonSchemaType.Null
-            : numericType.Value;
+        schema.Type = type.HasFlag(JsonSchemaType.Null) ? numericType.Value | JsonSchemaType.Null : numericType.Value;
     }
 }

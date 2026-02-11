@@ -9,12 +9,10 @@ namespace Application.Features.Auth.Commands.VerifyEmail;
 /// <summary>
 /// Command to verify email using a token.
 /// </summary>
-public sealed record VerifyEmailCommand(
-    Guid UserId,
-    string Token) : IRequest<Result>;
+public sealed record VerifyEmailCommand(Guid UserId, string Token) : IRequest<Result>;
 
-public sealed class VerifyEmailCommandHandler(
-    IApplicationDbContext context) : IRequestHandler<VerifyEmailCommand, Result>
+public sealed class VerifyEmailCommandHandler(IApplicationDbContext context)
+    : IRequestHandler<VerifyEmailCommand, Result>
 {
     public async Task<Result> Handle(VerifyEmailCommand request, CancellationToken cancellationToken)
     {
@@ -30,12 +28,10 @@ public sealed class VerifyEmailCommandHandler(
             return Result.Failure(Error.Validation("Email is already verified."));
         }
 
-        EmailVerificationToken? verificationToken = await context.EmailVerificationTokens
-            .FirstOrDefaultAsync(t =>
-                t.UserId == user.Id &&
-                t.Token == request.Token &&
-                !t.IsUsed,
-                cancellationToken);
+        EmailVerificationToken? verificationToken = await context.EmailVerificationTokens.FirstOrDefaultAsync(
+            t => t.UserId == user.Id && t.Token == request.Token && !t.IsUsed,
+            cancellationToken
+        );
 
         if (verificationToken is null || !verificationToken.IsValid())
         {

@@ -8,7 +8,8 @@ namespace Application.Common.Interfaces;
 /// Defines standard CRUD operations for data access.
 /// </summary>
 /// <typeparam name="T">The aggregate root type.</typeparam>
-public interface IRepository<T> where T : BaseEntity, IAggregateRoot
+public interface IRepository<T>
+    where T : BaseEntity, IAggregateRoot
 {
     /// <summary>
     /// Gets an entity by its identifier.
@@ -25,7 +26,8 @@ public interface IRepository<T> where T : BaseEntity, IAggregateRoot
     /// </summary>
     public Task<IReadOnlyList<T>> FindAsync(
         Expression<Func<T, bool>> predicate,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Adds a new entity.
@@ -45,14 +47,13 @@ public interface IRepository<T> where T : BaseEntity, IAggregateRoot
     /// <summary>
     /// Checks if any entity matches the specified predicate.
     /// </summary>
-    public Task<bool> AnyAsync(
-        Expression<Func<T, bool>> predicate,
-        CancellationToken cancellationToken = default);
+    public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Counts entities matching the specified predicate.
     /// </summary>
     public Task<int> CountAsync(
         Expression<Func<T, bool>>? predicate = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 }

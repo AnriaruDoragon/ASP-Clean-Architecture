@@ -9,32 +9,25 @@ namespace Application.Features.Auth.Commands.ResetPassword;
 /// <summary>
 /// Command to reset password using a valid token.
 /// </summary>
-public sealed record ResetPasswordCommand(
-    string Email,
-    string Token,
-    string NewPassword) : IRequest<Result>;
+public sealed record ResetPasswordCommand(string Email, string Token, string NewPassword) : IRequest<Result>;
 
-public sealed class ResetPasswordCommandHandler(
-    IApplicationDbContext context,
-    IPasswordHasher passwordHasher) : IRequestHandler<ResetPasswordCommand, Result>
+public sealed class ResetPasswordCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher)
+    : IRequestHandler<ResetPasswordCommand, Result>
 {
     public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
         string normalizedEmail = request.Email.ToLowerInvariant();
-        User? user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+        User? user = await context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
 
         if (user is null)
         {
             return Result.Failure(Error.Validation("Invalid email or token."));
         }
 
-        PasswordResetToken? resetToken = await context.PasswordResetTokens
-            .FirstOrDefaultAsync(t =>
-                t.UserId == user.Id &&
-                t.Token == request.Token &&
-                !t.IsUsed,
-                cancellationToken);
+        PasswordResetToken? resetToken = await context.PasswordResetTokens.FirstOrDefaultAsync(
+            t => t.UserId == user.Id && t.Token == request.Token && !t.IsUsed,
+            cancellationToken
+        );
 
         if (resetToken is null || !resetToken.IsValid())
         {
@@ -49,8 +42,8 @@ public sealed class ResetPasswordCommandHandler(
         resetToken.MarkAsUsed();
 
         // Invalidate all refresh tokens for security
-        List<Domain.Entities.RefreshToken> refreshTokens = await context.RefreshTokens
-            .Where(t => t.UserId == user.Id && !t.IsRevoked)
+        List<Domain.Entities.RefreshToken> refreshTokens = await context
+            .RefreshTokens.Where(t => t.UserId == user.Id && !t.IsRevoked)
             .ToListAsync(cancellationToken);
 
         foreach (Domain.Entities.RefreshToken token in refreshTokens)

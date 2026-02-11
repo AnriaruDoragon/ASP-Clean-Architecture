@@ -33,15 +33,14 @@ public class AuthController(ISender sender) : ControllerBase
     [ProducesResponseType<AuthTokens>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Register(
-        RegisterRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
         var command = new RegisterCommand(
             request.Email,
             request.Password,
             request.DeviceName,
-            Request.Headers.UserAgent);
+            Request.Headers.UserAgent
+        );
 
         Result<AuthTokens> result = await sender.Send(command, cancellationToken);
 
@@ -57,15 +56,9 @@ public class AuthController(ISender sender) : ControllerBase
     [ProducesResponseType<AuthTokens>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Login(
-        LoginRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
     {
-        var command = new LoginCommand(
-            request.Email,
-            request.Password,
-            request.DeviceName,
-            Request.Headers.UserAgent);
+        var command = new LoginCommand(request.Email, request.Password, request.DeviceName, Request.Headers.UserAgent);
 
         Result<AuthTokens> result = await sender.Send(command, cancellationToken);
 
@@ -80,9 +73,7 @@ public class AuthController(ISender sender) : ControllerBase
     [ProducesResponseType<AuthTokens>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Refresh(
-        RefreshTokenCommand command,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Refresh(RefreshTokenCommand command, CancellationToken cancellationToken)
     {
         Result<AuthTokens> result = await sender.Send(command, cancellationToken);
 
@@ -96,11 +87,9 @@ public class AuthController(ISender sender) : ControllerBase
     [HttpPost("[action]")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Logout(
-        LogoutCommand? command,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Logout(LogoutCommand? command, CancellationToken cancellationToken)
     {
-        Result result = await sender.Send(command ?? new LogoutCommand(null), cancellationToken);
+        Result result = await sender.Send(command ?? new LogoutCommand(), cancellationToken);
 
         return result.ToActionResult();
     }
@@ -113,7 +102,8 @@ public class AuthController(ISender sender) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetSessions(
         [FromQuery] GetSessionsQuery query,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         Result<IReadOnlyList<SessionDto>> result = await sender.Send(query, cancellationToken);
 
@@ -127,9 +117,7 @@ public class AuthController(ISender sender) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> RevokeSession(
-        Guid sessionId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> RevokeSession(Guid sessionId, CancellationToken cancellationToken)
     {
         var command = new RevokeSessionCommand(sessionId);
         Result result = await sender.Send(command, cancellationToken);
@@ -145,9 +133,7 @@ public class AuthController(ISender sender) : ControllerBase
     [RateLimit("Auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ForgotPassword(
-        ForgotPasswordRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
         var command = new ForgotPasswordCommand(request.Email);
         Result result = await sender.Send(command, cancellationToken);
@@ -163,9 +149,7 @@ public class AuthController(ISender sender) : ControllerBase
     [RateLimit("Auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ResetPassword(
-        ResetPasswordRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
     {
         var command = new ResetPasswordCommand(request.Email, request.Token, request.NewPassword);
         Result result = await sender.Send(command, cancellationToken);
@@ -205,9 +189,7 @@ public class AuthController(ISender sender) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> VerifyEmail(
-        VerifyEmailRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> VerifyEmail(VerifyEmailRequest request, CancellationToken cancellationToken)
     {
         string? userId = User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value;
 
@@ -229,10 +211,7 @@ public class AuthController(ISender sender) : ControllerBase
 /// <remarks>
 /// UserAgent is automatically captured from request headers.
 /// </remarks>
-public sealed record RegisterRequest(
-    string Email,
-    string Password,
-    string? DeviceName = null);
+public sealed record RegisterRequest(string Email, string Password, string? DeviceName = null);
 
 /// <summary>
 /// Request to login.
@@ -240,10 +219,7 @@ public sealed record RegisterRequest(
 /// <remarks>
 /// UserAgent is automatically captured from request headers.
 /// </remarks>
-public sealed record LoginRequest(
-    string Email,
-    string Password,
-    string? DeviceName = null);
+public sealed record LoginRequest(string Email, string Password, string? DeviceName = null);
 
 /// <summary>
 /// Request to initiate password reset.
@@ -253,10 +229,7 @@ public sealed record ForgotPasswordRequest(string Email);
 /// <summary>
 /// Request to reset password with token.
 /// </summary>
-public sealed record ResetPasswordRequest(
-    string Email,
-    string Token,
-    string NewPassword);
+public sealed record ResetPasswordRequest(string Email, string Token, string NewPassword);
 
 /// <summary>
 /// Request to verify email with token.

@@ -15,25 +15,19 @@ public class ProductConfiguration : AuditableEntityConfiguration<Product>
 
         builder.ToTable("Products");
 
-        builder.Property(p => p.Name)
-            .IsRequired()
-            .HasMaxLength(200);
+        builder.Property(p => p.Name).IsRequired().HasMaxLength(200);
 
-        builder.Property(p => p.Description)
-            .HasMaxLength(1000);
+        builder.Property(p => p.Description).HasMaxLength(1000);
 
-        builder.Property(p => p.Price)
-            .HasPrecision(18, 2);
+        builder.Property(p => p.Price).HasPrecision(18, 2);
 
         // Soft delete
-        builder.Property(p => p.IsDeleted)
-            .HasDefaultValue(false);
+        builder.Property(p => p.IsDeleted).HasDefaultValue(false);
 
         builder.HasQueryFilter(p => !p.IsDeleted);
 
         // Optimistic concurrency
-        builder.Property(p => p.RowVersion)
-            .IsRowVersion();
+        builder.Property(p => p.RowVersion).IsRowVersion();
 
         builder.HasIndex(p => p.Name);
         builder.HasIndex(p => p.IsActive);

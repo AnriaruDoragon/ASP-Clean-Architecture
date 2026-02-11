@@ -7,9 +7,7 @@ namespace Web.API.Middlewares;
 /// <summary>
 /// Global exception handling middleware that converts exceptions to RFC 7807 Problem Details responses.
 /// </summary>
-public class GlobalExceptionHandlerMiddleware(
-    RequestDelegate next,
-    ILogger<GlobalExceptionHandlerMiddleware> logger)
+public class GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlerMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -31,7 +29,7 @@ public class GlobalExceptionHandlerMiddleware(
             NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
             DomainException => (StatusCodes.Status400BadRequest, "Bad Request"),
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
-            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
+            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error"),
         };
 
         string correlationId = context.Items["CorrelationId"]?.ToString() ?? context.TraceIdentifier;
@@ -42,11 +40,7 @@ public class GlobalExceptionHandlerMiddleware(
             Title = title,
             Detail = exception.Message,
             Instance = context.Request.Path,
-            Extensions =
-            {
-                ["traceId"] = context.TraceIdentifier,
-                ["correlationId"] = correlationId
-            }
+            Extensions = { ["traceId"] = context.TraceIdentifier, ["correlationId"] = correlationId },
         };
 
         context.Response.ContentType = "application/problem+json";

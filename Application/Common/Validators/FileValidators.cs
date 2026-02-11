@@ -19,8 +19,7 @@ public sealed class MaxFileSizeValidator<T>(long maxSizeInBytes) : PropertyValid
 
     public override bool IsValid(ValidationContext<T> context, IFormFile file) => file.Length <= MaxSizeInBytes;
 
-    protected override string GetDefaultMessageTemplate(string errorCode)
-        => "File size must not exceed {MaxSize}.";
+    protected override string GetDefaultMessageTemplate(string errorCode) => "File size must not exceed {MaxSize}.";
 }
 
 /// <summary>
@@ -36,10 +35,11 @@ public sealed class AllowedContentTypesValidator<T>(params string[] contentTypes
 
     public override string Name => "AllowedContentTypesValidator";
 
-    public override bool IsValid(ValidationContext<T> context, IFormFile file) => ContentTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase);
+    public override bool IsValid(ValidationContext<T> context, IFormFile file) =>
+        ContentTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase);
 
-    protected override string GetDefaultMessageTemplate(string errorCode)
-        => "File type is not allowed. Allowed types: {AllowedTypes}.";
+    protected override string GetDefaultMessageTemplate(string errorCode) =>
+        "File type is not allowed. Allowed types: {AllowedTypes}.";
 }
 
 /// <summary>
@@ -51,9 +51,8 @@ public sealed class AllowedExtensionsValidator<T>(params string[] extensions) : 
     /// <summary>
     /// Allowed file extensions (e.g., ".jpg", ".png").
     /// </summary>
-    public IReadOnlyList<string> Extensions { get; } = extensions
-        .Select(e => e.StartsWith('.') ? e : $".{e}")
-        .ToArray();
+    public IReadOnlyList<string> Extensions { get; } =
+        extensions.Select(e => e.StartsWith('.') ? e : $".{e}").ToArray();
 
     public override string Name => "AllowedExtensionsValidator";
 
@@ -63,6 +62,6 @@ public sealed class AllowedExtensionsValidator<T>(params string[] extensions) : 
         return Extensions.Contains(extension, StringComparer.OrdinalIgnoreCase);
     }
 
-    protected override string GetDefaultMessageTemplate(string errorCode)
-        => "File extension is not allowed. Allowed extensions: {AllowedExtensions}.";
+    protected override string GetDefaultMessageTemplate(string errorCode) =>
+        "File extension is not allowed. Allowed extensions: {AllowedExtensions}.";
 }

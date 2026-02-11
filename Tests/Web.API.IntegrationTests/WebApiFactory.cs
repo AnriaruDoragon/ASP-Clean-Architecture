@@ -24,23 +24,28 @@ public class WebApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((context, config) =>
-        {
-            // Add test-specific configuration
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+        builder.ConfigureAppConfiguration(
+            (_, config) =>
             {
-                ["Jwt:SecretKey"] = "test-secret-key-that-is-at-least-32-characters-long",
-                ["Jwt:Issuer"] = "TestIssuer",
-                ["Jwt:Audience"] = "TestAudience",
-                ["Security:EnforceHttps"] = "false"
-            });
-        });
+                // Add test-specific configuration
+                config.AddInMemoryCollection(
+                    new Dictionary<string, string?>
+                    {
+                        ["Jwt:SecretKey"] = "test-secret-key-that-is-at-least-32-characters-long",
+                        ["Jwt:Issuer"] = "TestIssuer",
+                        ["Jwt:Audience"] = "TestAudience",
+                        ["Security:EnforceHttps"] = "false",
+                    }
+                );
+            }
+        );
 
         builder.ConfigureTestServices(services =>
         {
             // Remove existing DbContext registration
-            ServiceDescriptor? descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+            ServiceDescriptor? descriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>)
+            );
 
             if (descriptor != null)
             {

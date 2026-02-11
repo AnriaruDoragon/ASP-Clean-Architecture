@@ -8,7 +8,8 @@ public interface IBackgroundJobService
     /// <summary>
     /// Enqueues a job for background execution.
     /// </summary>
-    public Task EnqueueAsync<T>(T job, CancellationToken cancellationToken = default) where T : class;
+    public Task EnqueueAsync<T>(T job, CancellationToken cancellationToken = default)
+        where T : class;
 
     /// <summary>
     /// Enqueues a named job with payload for background execution.
@@ -18,5 +19,6 @@ public interface IBackgroundJobService
     /// <summary>
     /// Schedules a job for delayed execution.
     /// </summary>
-    public Task ScheduleAsync<T>(T job, TimeSpan delay, CancellationToken cancellationToken = default) where T : class;
+    public Task ScheduleAsync<T>(T job, TimeSpan delay, CancellationToken cancellationToken = default)
+        where T : class;
 }

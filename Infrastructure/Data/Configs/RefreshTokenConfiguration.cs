@@ -12,39 +12,32 @@ public class RefreshTokenConfiguration : BaseEntityConfiguration<RefreshToken>
 
         builder.ToTable("RefreshTokens");
 
-        builder.Property(rt => rt.UserId)
-            .IsRequired();
+        builder.Property(rt => rt.UserId).IsRequired();
 
-        builder.Property(rt => rt.Token)
-            .IsRequired()
-            .HasMaxLength(512);
+        builder.Property(rt => rt.Token).IsRequired().HasMaxLength(512);
 
-        builder.Property(rt => rt.ExpiresAt)
-            .IsRequired();
+        builder.Property(rt => rt.ExpiresAt).IsRequired();
 
-        builder.Property(rt => rt.CreatedAt)
-            .IsRequired();
+        builder.Property(rt => rt.CreatedAt).IsRequired();
 
-        builder.Property(rt => rt.IsRevoked)
-            .IsRequired()
-            .HasDefaultValue(false);
+        builder.Property(rt => rt.IsRevoked).IsRequired().HasDefaultValue(false);
 
-        builder.Property(rt => rt.DeviceName)
-            .HasMaxLength(256);
+        builder.Property(rt => rt.DeviceName).HasMaxLength(256);
 
-        builder.Property(rt => rt.UserAgent)
-            .HasMaxLength(512);
+        builder.Property(rt => rt.UserAgent).HasMaxLength(512);
 
         // Index for token lookup
         builder.HasIndex(rt => rt.Token);
 
         // Index for cleanup of expired/revoked tokens
-        builder.HasIndex(rt => new { rt.UserId, rt.IsRevoked, rt.ExpiresAt });
+        builder.HasIndex(rt => new
+        {
+            rt.UserId,
+            rt.IsRevoked,
+            rt.ExpiresAt,
+        });
 
         // Foreign key to User (no navigation property to keep RefreshToken lightweight)
-        builder.HasOne<User>()
-            .WithMany()
-            .HasForeignKey(rt => rt.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<User>().WithMany().HasForeignKey(rt => rt.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }

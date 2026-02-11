@@ -18,7 +18,10 @@ public sealed class DomainEventDispatcher(IPublisher publisher) : IDomainEventDi
         await publisher.Publish(notification, cancellationToken);
     }
 
-    public async Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
+    public async Task DispatchAsync(
+        IEnumerable<IDomainEvent> domainEvents,
+        CancellationToken cancellationToken = default
+    )
     {
         foreach (IDomainEvent domainEvent in domainEvents)
         {

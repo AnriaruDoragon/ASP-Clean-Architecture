@@ -10,11 +10,11 @@ namespace Infrastructure.BackgroundJobs;
 /// Jobs are dispatched via MediatR in a separate task, not blocking the HTTP response.
 /// Suitable for development and simple scenarios.
 /// </summary>
-public sealed class InstantJobService(
-    IServiceScopeFactory scopeFactory,
-    ILogger<InstantJobService> logger) : IBackgroundJobService
+public sealed class InstantJobService(IServiceScopeFactory scopeFactory, ILogger<InstantJobService> logger)
+    : IBackgroundJobService
 {
-    public Task EnqueueAsync<T>(T job, CancellationToken cancellationToken = default) where T : class
+    public Task EnqueueAsync<T>(T job, CancellationToken cancellationToken = default)
+        where T : class
     {
         logger.LogDebug("Fire-and-forget job {JobType}", typeof(T).Name);
 
@@ -33,7 +33,8 @@ public sealed class InstantJobService(
         return Task.CompletedTask;
     }
 
-    public Task ScheduleAsync<T>(T job, TimeSpan delay, CancellationToken cancellationToken = default) where T : class
+    public Task ScheduleAsync<T>(T job, TimeSpan delay, CancellationToken cancellationToken = default)
+        where T : class
     {
         logger.LogDebug("Scheduling job {JobType} with delay {Delay}", typeof(T).Name, delay);
 

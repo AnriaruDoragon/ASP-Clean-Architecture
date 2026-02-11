@@ -12,14 +12,16 @@ namespace Application.Common.Behaviors;
 /// <typeparam name="TResponse">The response type (must be a reference type).</typeparam>
 public sealed class CachingBehavior<TRequest, TResponse>(
     ICacheService cacheService,
-    ILogger<CachingBehavior<TRequest, TResponse>> logger) : IPipelineBehavior<TRequest, TResponse>
+    ILogger<CachingBehavior<TRequest, TResponse>> logger
+) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
     where TResponse : class
 {
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         // Only cache if the request implements ICacheableQuery
         if (request is not ICacheableQuery cacheableQuery)
@@ -43,11 +45,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
         TResponse response = await next();
 
         // Cache the response
-        await cacheService.SetAsync(
-            cacheKey,
-            response,
-            cacheableQuery.CacheExpiration,
-            cancellationToken);
+        await cacheService.SetAsync(cacheKey, response, cacheableQuery.CacheExpiration, cancellationToken);
 
         return response;
     }

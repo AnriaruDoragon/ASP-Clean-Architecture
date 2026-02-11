@@ -13,7 +13,7 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
     {
         "/health",
         "/health/live",
-        "/health/ready"
+        "/health/ready",
     };
 
     private static readonly HashSet<string> s_sensitiveHeaders = new(StringComparer.OrdinalIgnoreCase)
@@ -21,7 +21,7 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
         "Authorization",
         "Cookie",
         "X-API-Key",
-        "X-Auth-Token"
+        "X-Auth-Token",
     };
 
     public async Task InvokeAsync(HttpContext context)
@@ -61,15 +61,13 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
             request.Method,
             request.Path,
             request.QueryString,
-            headers);
+            headers
+        );
     }
 
     private void LogResponse(HttpResponse response, long elapsedMs)
     {
-        logger.LogDebug(
-            "HTTP Response {StatusCode} in {ElapsedMs}ms",
-            response.StatusCode,
-            elapsedMs);
+        logger.LogDebug("HTTP Response {StatusCode} in {ElapsedMs}ms", response.StatusCode, elapsedMs);
     }
 
     private static Dictionary<string, string> SanitizeHeaders(IHeaderDictionary headers)
@@ -78,9 +76,7 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
 
         foreach (KeyValuePair<string, StringValues> header in headers)
         {
-            sanitized[header.Key] = s_sensitiveHeaders.Contains(header.Key)
-                ? "[REDACTED]"
-                : header.Value.ToString();
+            sanitized[header.Key] = s_sensitiveHeaders.Contains(header.Key) ? "[REDACTED]" : header.Value.ToString();
         }
 
         return sanitized;

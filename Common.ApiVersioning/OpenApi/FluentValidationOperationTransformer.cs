@@ -29,13 +29,15 @@ namespace Common.ApiVersioning.OpenApi;
 /// </code>
 /// </para>
 /// </remarks>
-public sealed class FluentValidationOperationTransformer(IServiceProvider serviceProvider) : IOpenApiOperationTransformer
+public sealed class FluentValidationOperationTransformer(IServiceProvider serviceProvider)
+    : IOpenApiOperationTransformer
 {
     /// <inheritdoc />
     public Task TransformAsync(
         OpenApiOperation operation,
         OpenApiOperationTransformerContext context,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (operation.Parameters is null || operation.Parameters.Count == 0)
             return Task.CompletedTask;
@@ -43,8 +45,10 @@ public sealed class FluentValidationOperationTransformer(IServiceProvider servic
         using IServiceScope scope = serviceProvider.CreateScope();
 
         // Group API parameter descriptions by their container type
-        IEnumerable<IGrouping<Type, ApiParameterDescription>> parametersByContainer = context.Description.ParameterDescriptions
-            .Where(p => p.Source == BindingSource.Query || p.Source == BindingSource.Path)
+        IEnumerable<IGrouping<Type, ApiParameterDescription>> parametersByContainer = context
+            .Description.ParameterDescriptions.Where(p =>
+                p.Source == BindingSource.Query || p.Source == BindingSource.Path
+            )
             .Where(p => p.ModelMetadata.ContainerType is not null)
             .GroupBy(p => p.ModelMetadata.ContainerType!);
 
@@ -60,19 +64,19 @@ public sealed class FluentValidationOperationTransformer(IServiceProvider servic
             if (validator is not null)
             {
                 IValidatorDescriptor descriptor = validator.CreateDescriptor();
-                memberValidators = descriptor.GetMembersWithValidators()
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.ToList(),
-                        StringComparer.OrdinalIgnoreCase);
+                memberValidators = descriptor
+                    .GetMembersWithValidators()
+                    .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
             }
 
             foreach (ApiParameterDescription parameterDescription in group)
             {
                 // Find matching OpenAPI parameter by name
-                OpenApiParameter? openApiParameter = operation.Parameters
-                    .OfType<OpenApiParameter>()
-                    .FirstOrDefault(p => string.Equals(p.Name, parameterDescription.Name, StringComparison.OrdinalIgnoreCase));
+                OpenApiParameter? openApiParameter = operation
+                    .Parameters.OfType<OpenApiParameter>()
+                    .FirstOrDefault(p =>
+                        string.Equals(p.Name, parameterDescription.Name, StringComparison.OrdinalIgnoreCase)
+                    );
 
                 if (openApiParameter?.Schema is not OpenApiSchema parameterSchema)
                     continue;
@@ -82,11 +86,16 @@ public sealed class FluentValidationOperationTransformer(IServiceProvider servic
                 EnsureSchemaType(parameterSchema, parameterDescription.ModelMetadata.ModelType);
 
                 // Get the property name on the container type (PascalCase)
-                string propertyName = parameterDescription.ModelMetadata.PropertyName
-                                      ?? parameterDescription.Name;
+                string propertyName = parameterDescription.ModelMetadata.PropertyName ?? parameterDescription.Name;
 
                 // Apply FluentValidation rules if available
-                if (memberValidators is null || !memberValidators.TryGetValue(propertyName, out List<(IPropertyValidator Validator, IRuleComponent Options)>? rules))
+                if (
+                    memberValidators is null
+                    || !memberValidators.TryGetValue(
+                        propertyName,
+                        out List<(IPropertyValidator Validator, IRuleComponent Options)>? rules
+                    )
+                )
                     continue;
 
                 foreach ((IPropertyValidator propertyValidator, IRuleComponent _) in rules)
@@ -94,7 +103,8 @@ public sealed class FluentValidationOperationTransformer(IServiceProvider servic
                     FluentValidationRuleMapper.ApplyRule(
                         parameterSchema,
                         propertyValidator,
-                        markRequired: () => openApiParameter.Required = true);
+                        markRequired: () => openApiParameter.Required = true
+                    );
                 }
             }
         }
@@ -119,11 +129,15 @@ public sealed class FluentValidationOperationTransformer(IServiceProvider servic
 
         JsonSchemaType? targetType = type switch
         {
-            _ when type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte) => JsonSchemaType.Integer,
+            _ when type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte) =>
+                JsonSchemaType.Integer,
             _ when type == typeof(decimal) || type == typeof(double) || type == typeof(float) => JsonSchemaType.Number,
             _ when type == typeof(bool) => JsonSchemaType.Boolean,
-            _ when type == typeof(string) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateTimeOffset) => JsonSchemaType.String,
-            _ => null
+            _ when type == typeof(string)
+                    || type == typeof(Guid)
+                    || type == typeof(DateTime)
+                    || type == typeof(DateTimeOffset) => JsonSchemaType.String,
+            _ => null,
         };
 
         if (targetType is null)

@@ -15,12 +15,7 @@ public sealed class PasswordHasher : IPasswordHasher
     public string Hash(string password)
     {
         byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
-        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(
-            password,
-            salt,
-            Iterations,
-            HashAlgorithmName.SHA256,
-            HashSize);
+        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, HashAlgorithmName.SHA256, HashSize);
 
         // Format: iterations.salt.hash (all base64)
         return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
@@ -38,12 +33,7 @@ public sealed class PasswordHasher : IPasswordHasher
         byte[] salt = Convert.FromBase64String(parts[1]);
         byte[] hash = Convert.FromBase64String(parts[2]);
 
-        byte[] testHash = Rfc2898DeriveBytes.Pbkdf2(
-            password,
-            salt,
-            iterations,
-            HashAlgorithmName.SHA256,
-            hash.Length);
+        byte[] testHash = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, hash.Length);
 
         return CryptographicOperations.FixedTimeEquals(hash, testHash);
     }

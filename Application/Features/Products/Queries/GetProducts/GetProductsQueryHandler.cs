@@ -9,12 +9,13 @@ namespace Application.Features.Products.Queries.GetProducts;
 /// <summary>
 /// Handler for GetProductsQuery.
 /// </summary>
-public sealed class GetProductsQueryHandler(
-    IApplicationDbContext context) : IQueryHandler<GetProductsQuery, PagedList<ProductDto>>
+public sealed class GetProductsQueryHandler(IApplicationDbContext context)
+    : IQueryHandler<GetProductsQuery, PagedList<ProductDto>>
 {
     public async Task<Result<PagedList<ProductDto>>> Handle(
         GetProductsQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         IQueryable<Product> query = context.Products.AsNoTracking();
 
@@ -33,14 +34,7 @@ public sealed class GetProductsQueryHandler(
             .OrderBy(p => p.Name)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(p => new ProductDto(
-                p.Id,
-                p.Name,
-                p.Description,
-                p.Price,
-                p.StockQuantity,
-                p.IsActive,
-                p.CreatedAt))
+            .Select(p => new ProductDto(p.Id, p.Name, p.Description, p.Price, p.StockQuantity, p.IsActive, p.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return new PagedList<ProductDto>(items, totalCount, request.PageNumber, request.PageSize);

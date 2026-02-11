@@ -10,16 +10,14 @@ public sealed class RegisterCommandHandler(
     IApplicationDbContext context,
     IPasswordHasher passwordHasher,
     IJwtService jwtService,
-    IDateTimeProvider dateTimeProvider) : ICommandHandler<RegisterCommand, AuthTokens>
+    IDateTimeProvider dateTimeProvider
+) : ICommandHandler<RegisterCommand, AuthTokens>
 {
-    public async Task<Result<AuthTokens>> Handle(
-        RegisterCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Result<AuthTokens>> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
         // Check if email already exists
         string normalizedEmail = request.Email.ToLowerInvariant();
-        bool emailExists = await context.Users
-            .AnyAsync(u => u.Email == normalizedEmail, cancellationToken);
+        bool emailExists = await context.Users.AnyAsync(u => u.Email == normalizedEmail, cancellationToken);
 
         if (emailExists)
             return Result.Failure<AuthTokens>(Error.Conflict("User.EmailTaken", "Email is already registered."));
@@ -37,7 +35,8 @@ public sealed class RegisterCommandHandler(
             refreshTokenValue,
             dateTimeProvider.UtcNow.AddDays(7),
             request.DeviceName,
-            request.UserAgent);
+            request.UserAgent
+        );
 
         context.RefreshTokens.Add(refreshToken);
 
@@ -46,9 +45,6 @@ public sealed class RegisterCommandHandler(
         // Generate tokens
         string accessToken = jwtService.GenerateAccessToken(user);
 
-        return new AuthTokens(
-            accessToken,
-            refreshTokenValue,
-            dateTimeProvider.UtcNow.AddMinutes(15));
+        return new AuthTokens(accessToken, refreshTokenValue, dateTimeProvider.UtcNow.AddMinutes(15));
     }
 }

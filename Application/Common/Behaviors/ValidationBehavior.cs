@@ -20,7 +20,8 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (!validators.Any())
             return await next();
@@ -28,12 +29,10 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
         var context = new ValidationContext<TRequest>(request);
 
         ValidationResult[] validationResults = await Task.WhenAll(
-            validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+            validators.Select(v => v.ValidateAsync(context, cancellationToken))
+        );
 
-        var failures = validationResults
-            .SelectMany(r => r.Errors)
-            .Where(f => f is not null)
-            .ToList();
+        var failures = validationResults.SelectMany(r => r.Errors).Where(f => f is not null).ToList();
 
         if (failures.Count == 0)
             return await next();
@@ -41,9 +40,7 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
         // Group validation failures by property name
         var errorsDictionary = failures
             .GroupBy(f => f.PropertyName)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(f => f.ErrorMessage).ToArray());
+            .ToDictionary(g => g.Key, g => g.Select(f => f.ErrorMessage).ToArray());
 
         var validationError = ValidationError.FromDictionary(errorsDictionary);
 
@@ -53,11 +50,10 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
 
     private static TResponse CreateValidationFailureResult(Error error)
     {
-
         // Check if TResponse is Result<T> or just Result
         if (typeof(TResponse) == typeof(Result))
         {
-            return (TResponse)(object)Result.Failure(error);
+            return (TResponse)Result.Failure(error);
         }
 
         // For Result<T>, we need to use reflection to create the failure

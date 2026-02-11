@@ -105,12 +105,16 @@ public static class ApiVersioningExtension
     /// </exception>
     /// <seealso cref="UseScalarApiReference"/>
     /// <seealso cref="ApiVersionConfiguration"/>
-    public static IServiceCollection AddApiVersioningServices(this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection AddApiVersioningServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        ApiVersionConfiguration? apiVersionConfiguration = configuration.GetSection("ApiVersioning").Get<ApiVersionConfiguration>();
+        ApiVersionConfiguration? apiVersionConfiguration = configuration
+            .GetSection("ApiVersioning")
+            .Get<ApiVersionConfiguration>();
         if (apiVersionConfiguration is null)
         {
             apiVersionConfiguration = new ApiVersionConfiguration();
@@ -126,9 +130,7 @@ public static class ApiVersioningExtension
                 options.ReportApiVersions = true;
                 options.DefaultApiVersion = apiVersionConfiguration.DefaultVersion.ApiVersion;
                 options.UnsupportedApiVersionStatusCode = (int)HttpStatusCode.BadRequest;
-                options.ApiVersionReader = ApiVersionReader.Combine(
-                    new HeaderApiVersionReader("x-api-version")
-                );
+                options.ApiVersionReader = ApiVersionReader.Combine(new HeaderApiVersionReader("x-api-version"));
             })
             .AddMvc(options =>
             {
@@ -146,28 +148,33 @@ public static class ApiVersioningExtension
 
         foreach (ApiVersionInfo apiVersionInfo in apiVersionConfiguration.Versions)
         {
-            services.AddOpenApi(apiVersionInfo.Name, options =>
-            {
-                options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
-
-                options.AddDocumentTransformer((document, _, _) =>
+            services.AddOpenApi(
+                apiVersionInfo.Name,
+                options =>
                 {
-                    document.Info.Version = $"v{apiVersionInfo.Version} ({apiVersionInfo.Status})";
-                    document.Info.Title = apiVersionInfo.Title ?? "API";
-                    document.Info.Description = apiVersionInfo.Description ?? string.Empty;
+                    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
 
-                    return Task.CompletedTask;
-                });
+                    options.AddDocumentTransformer(
+                        (document, _, _) =>
+                        {
+                            document.Info.Version = $"v{apiVersionInfo.Version} ({apiVersionInfo.Status})";
+                            document.Info.Title = apiVersionInfo.Title ?? "API";
+                            document.Info.Description = apiVersionInfo.Description ?? string.Empty;
 
-                // Fix missing numeric types (.NET 10 omits 'type' for int, double, etc.)
-                options.AddSchemaTransformer<NumericTypeSchemaTransformer>();
+                            return Task.CompletedTask;
+                        }
+                    );
 
-                // Add FluentValidation rules to OpenAPI schemas (request bodies)
-                options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
+                    // Fix missing numeric types (.NET 10 omits 'type' for int, double, etc.)
+                    options.AddSchemaTransformer<NumericTypeSchemaTransformer>();
 
-                // Add FluentValidation rules to OpenAPI parameters (query/route)
-                options.AddOperationTransformer<FluentValidationOperationTransformer>();
-            });
+                    // Add FluentValidation rules to OpenAPI schemas (request bodies)
+                    options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
+
+                    // Add FluentValidation rules to OpenAPI parameters (query/route)
+                    options.AddOperationTransformer<FluentValidationOperationTransformer>();
+                }
+            );
         }
 
         return services;
@@ -226,31 +233,32 @@ public static class ApiVersioningExtension
     /// <seealso cref="AddApiVersioningServices"/>
     public static IApplicationBuilder UseScalarApiReference(this IApplicationBuilder app)
     {
-        return app.UseRouting().UseEndpoints(endpoints =>
-        {
-            ApiVersionConfiguration apiVersionConfiguration =
-                app.ApplicationServices.GetRequiredService<ApiVersionConfiguration>();
-
-            endpoints.MapOpenApi();
-
-            endpoints.MapScalarApiReference(options =>
+        return app.UseRouting()
+            .UseEndpoints(endpoints =>
             {
-                ScalarConfiguration scalarConfiguration = apiVersionConfiguration.Scalar;
+                ApiVersionConfiguration apiVersionConfiguration =
+                    app.ApplicationServices.GetRequiredService<ApiVersionConfiguration>();
 
-                options.Title = scalarConfiguration.Title;
-                options.Theme = scalarConfiguration.Theme;
-                options.Layout = scalarConfiguration.Layout;
-                options.Servers = scalarConfiguration.Servers;
+                endpoints.MapOpenApi();
 
-                options.AddDocuments(
-                    apiVersionConfiguration.Versions
-                        .OrderByDescending(v => v.MajorVersion)
-                        .ThenByDescending(v => v.MinorVersion)
-                        .ThenByDescending(v => v.PatchVersion)
-                        .Select(v => v.Name)
-                        .ToArray()
-                );
+                endpoints.MapScalarApiReference(options =>
+                {
+                    ScalarConfiguration scalarConfiguration = apiVersionConfiguration.Scalar;
+
+                    options.Title = scalarConfiguration.Title;
+                    options.Theme = scalarConfiguration.Theme;
+                    options.Layout = scalarConfiguration.Layout;
+                    options.Servers = scalarConfiguration.Servers;
+
+                    options.AddDocuments(
+                        apiVersionConfiguration
+                            .Versions.OrderByDescending(v => v.MajorVersion)
+                            .ThenByDescending(v => v.MinorVersion)
+                            .ThenByDescending(v => v.PatchVersion)
+                            .Select(v => v.Name)
+                            .ToArray()
+                    );
+                });
             });
-        });
     }
 }

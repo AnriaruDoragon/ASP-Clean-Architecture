@@ -11,11 +11,13 @@ public sealed class UploadFileCommandValidator : AbstractValidator<UploadFileCom
     public UploadFileCommandValidator()
     {
         RuleFor(x => x.File)
-            .NotNull().WithMessage("File is required.")
-            .MaxFileSize(10_000_000).WithMessage("File size must not exceed 10 MB.")
+            .NotNull()
+            .WithMessage("File is required.")
+            .MaxFileSize(10_000_000)
+            .WithMessage("File size must not exceed 10 MB.")
             .AllowedContentTypes("image/jpeg", "image/png", "image/webp", "video/mp4")
-                .WithMessage("Only JPEG, PNG, WebP, and MP4 files are allowed.")
+            .WithMessage("Only JPEG, PNG, WebP, and MP4 files are allowed.")
             .AllowedExtensions(".jpg", ".jpeg", ".png", ".webp", ".mp4")
-                .WithMessage("File extension is not allowed.");
+            .WithMessage("File extension is not allowed.");
     }
 }

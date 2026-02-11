@@ -26,15 +26,13 @@ public abstract class ValueObject : IEquatable<ValueObject>
         if (other is null)
             return false;
 
-        return GetEqualityComponents()
-            .SequenceEqual(other.GetEqualityComponents());
+        return GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
     }
 
     public override int GetHashCode()
     {
         return GetEqualityComponents()
-            .Aggregate(0, (hash, component) =>
-                HashCode.Combine(hash, component?.GetHashCode() ?? 0));
+            .Aggregate(0, (hash, component) => HashCode.Combine(hash, component?.GetHashCode() ?? 0));
     }
 
     public static bool operator ==(ValueObject? left, ValueObject? right)

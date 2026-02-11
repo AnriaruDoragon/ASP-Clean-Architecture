@@ -23,9 +23,7 @@ public class FilesController(ISender sender) : ControllerBase
     [ProducesResponseType<UploadFileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Upload(
-        IFormFile file,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Upload(IFormFile file, CancellationToken cancellationToken)
     {
         var command = new UploadFileCommand(file);
         Result<UploadFileResponse> result = await sender.Send(command, cancellationToken);
