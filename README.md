@@ -116,9 +116,10 @@ docker compose --profile cache up -d
 
 ### First-Time Setup
 
-1. **Copy environment file:**
+1. **Copy environment file and restore tools:**
    ```bash
    cp .env.example .env
+   dotnet tool restore
    ```
 
 2. **(Optional) Local HTTPS domain setup:**
@@ -277,7 +278,8 @@ task db:update                # Apply migrations
 task db:shell                 # Database shell
 
 # Utilities
-task format             # Format code
+task format             # Format code (dotnet format + CSharpier)
+task format:check       # Check formatting without changes
 task info               # Show environment info
 ```
 
@@ -348,7 +350,9 @@ Base classes for entities:
 6. **Validators** (Application): Create FluentValidation validators
 7. **Controller** (Web.API): Create in `Controllers/V1/`, use MediatR to send commands/queries
 
-## Example: Product Feature
+## Examples
+
+### Product Feature (CRUD)
 
 A complete example demonstrating all patterns is included:
 
@@ -362,8 +366,18 @@ A complete example demonstrating all patterns is included:
 - **Soft Delete**: Products use soft delete with `IsDeleted` and `DeletedAt` fields, filtered by global query filter
 - **Optimistic Concurrency**: `RowVersion` column prevents concurrent update conflicts
 - **Domain Events**: Events dispatched after successful database save
+- **Pagination**: `PagedList<T>` wrapper with page/size/total metadata
+- **Query Parameters**: `[FromQuery]` binding with FluentValidation rules visible in OpenAPI
 
-Use this as a reference when adding new features.
+### File Upload
+
+Demonstrates file upload with validation:
+
+- **Command**: `Application/Features/Files/Commands/UploadFile/` - command, handler, validator
+- **Controller**: `Web.API/Controllers/V1/FilesController.cs` - upload endpoint
+- **Validation**: Custom FluentValidation extensions for file size, content type, and extension checks
+
+Use these as a reference when adding new features.
 
 ### Removing the Products Example
 
@@ -457,7 +471,8 @@ app.MapControllers();
 - Version lifecycle management (Active → Deprecated → Sunset)
 - Automatic OpenAPI 3.0 document generation per version
 - Scalar interactive documentation UI
-- FluentValidation rules extracted to OpenAPI schemas
+- FluentValidation rules extracted to OpenAPI schemas (request bodies and query parameters)
+- Numeric type fix for .NET 10's multi-type schema generation
 
 **Endpoints:**
 
@@ -750,7 +765,7 @@ dotnet test Tests/Web.API.IntegrationTests
 
 ## Code Style
 
-Enforced via `.editorconfig` (C# 14 / .NET 10):
+Enforced via `.editorconfig` and [CSharpier](https://csharpier.com/) (C# 14 / .NET 10):
 
 - **File-scoped namespaces** required
 - **Nullable reference types** enabled
@@ -760,6 +775,7 @@ Enforced via `.editorconfig` (C# 14 / .NET 10):
 - **No `this.` qualification**
 - **`var`**: Only when type is apparent
 - **Expression-bodied members**: For single-line methods/properties
+- **Line width**: 120 characters (enforced by CSharpier)
 
 ## License
 

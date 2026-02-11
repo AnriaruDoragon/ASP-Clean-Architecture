@@ -281,9 +281,22 @@ Each version generates a separate OpenAPI document accessible at:
 
 Scalar UI combines all documents with a version selector dropdown.
 
-### FluentValidation Schema Transformer
+### FluentValidation Integration
 
-When FluentValidation validators are registered, the library automatically extracts validation rules and adds them to OpenAPI schemas:
+When FluentValidation validators are registered, the library automatically extracts validation rules and adds them to OpenAPI schemas and parameters:
+
+- **Schema Transformer** — Applies rules to request body properties (POST/PUT payloads)
+- **Operation Transformer** — Applies rules to query and route parameters (`[FromQuery]`, `[FromRoute]`)
+
+For query parameters to be picked up, bind them as a complex type:
+
+```csharp
+public async Task<IActionResult> GetProducts(
+    [FromQuery] GetProductsQuery query,    // ✅ Rules extracted
+    CancellationToken cancellationToken)
+```
+
+**Supported rules:**
 
 | FluentValidation Rule      | OpenAPI Schema                         |
 |----------------------------|----------------------------------------|
@@ -299,7 +312,11 @@ When FluentValidation validators are registered, the library automatically extra
 | `EmailAddress()`           | `format: "email"`                      |
 | `Matches("^[a-z]+$")`      | `pattern: "^[a-z]+$"`                  |
 
-This enables API clients to see validation constraints directly in the OpenAPI specification.
+### Numeric Type Fix
+
+.NET 10's OpenAPI generator sets multi-type flags on numeric properties (e.g., `Integer | String`) due to JSON Schema 2020-12 semantics. Since OpenAPI 3.0 only supports a single `type` value, the serializer drops the field entirely — causing Scalar UI to display numeric fields as strings.
+
+The `NumericTypeSchemaTransformer` strips the extraneous `String` flag from numeric types, and the Operation Transformer ensures query parameter types are correctly set.
 
 ## Advanced Usage
 
@@ -400,7 +417,8 @@ YourSolution.sln
 │   │   ├── Configs/
 │   │   ├── Enums/
 │   │   ├── Extensions/
-│   │   └── Middlewares/
+│   │   ├── Middlewares/
+│   │   └── OpenApi/                    # Schema/operation transformers
 │   └── Web.API/                        # References Common.ApiVersioning
 │       └── Program.cs
 ```
