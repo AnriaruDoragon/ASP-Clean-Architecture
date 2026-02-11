@@ -11,15 +11,16 @@ namespace Web.API.Authorization.Handlers;
 /// Handles email verification authorization by checking the database.
 /// Use this as a template for creating similar custom guards.
 /// </summary>
-public sealed class EmailVerifiedAuthorizationHandler(
-    IServiceScopeFactory scopeFactory) : AuthorizationHandler<EmailVerifiedRequirement>
+public sealed class EmailVerifiedAuthorizationHandler(IServiceScopeFactory scopeFactory)
+    : AuthorizationHandler<EmailVerifiedRequirement>
 {
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
-        EmailVerifiedRequirement requirement)
+        EmailVerifiedRequirement requirement
+    )
     {
-        Claim? userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)
-                             ?? context.User.FindFirst(JwtRegisteredClaimNames.Sub);
+        Claim? userIdClaim =
+            context.User.FindFirst(ClaimTypes.NameIdentifier) ?? context.User.FindFirst(JwtRegisteredClaimNames.Sub);
 
         if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
         {
@@ -30,8 +31,8 @@ public sealed class EmailVerifiedAuthorizationHandler(
         using IServiceScope scope = scopeFactory.CreateScope();
         IApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
-        bool isEmailVerified = await dbContext.Users
-            .AsNoTracking()
+        bool isEmailVerified = await dbContext
+            .Users.AsNoTracking()
             .Where(u => u.Id == userId)
             .Select(u => u.EmailVerified)
             .FirstOrDefaultAsync();

@@ -44,7 +44,7 @@ public class ProductsControllerTests(WebApiFactory factory) : IClassFixture<WebA
             Name = "Test Product",
             Description = "Test Description",
             Price = 99.99m,
-            StockQuantity = 10
+            StockQuantity = 10,
         };
 
         // Act

@@ -10,14 +10,10 @@ namespace Infrastructure.Data.Interceptors;
 /// Interceptor that automatically sets audit fields on entities
 /// when they are added or modified.
 /// </summary>
-public class AuditableEntityInterceptor(
-    ICurrentUserService currentUserService,
-    IDateTimeProvider dateTimeProvider)
+public class AuditableEntityInterceptor(ICurrentUserService currentUserService, IDateTimeProvider dateTimeProvider)
     : SaveChangesInterceptor
 {
-    public override InterceptionResult<int> SavingChanges(
-        DbContextEventData eventData,
-        InterceptionResult<int> result)
+    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
         UpdateEntities(eventData.Context);
         return base.SavingChanges(eventData, result);
@@ -26,7 +22,8 @@ public class AuditableEntityInterceptor(
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         UpdateEntities(eventData.Context);
         return base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -37,8 +34,8 @@ public class AuditableEntityInterceptor(
         if (context is null)
             return;
 
-        IEnumerable<EntityEntry<AuditableEntity>> entries = context.ChangeTracker
-            .Entries<AuditableEntity>()
+        IEnumerable<EntityEntry<AuditableEntity>> entries = context
+            .ChangeTracker.Entries<AuditableEntity>()
             .Where(e => e.State is EntityState.Added or EntityState.Modified);
 
         foreach (EntityEntry<AuditableEntity> entry in entries)

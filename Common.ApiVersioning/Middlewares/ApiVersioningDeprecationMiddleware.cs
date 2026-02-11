@@ -49,7 +49,8 @@ public class ApiVersioningDeprecationMiddleware(RequestDelegate next, ApiVersion
 
         if (versioningFeature?.RawRequestedApiVersion != null)
         {
-            string versionName = $"v{versioningFeature.RequestedApiVersion?.MajorVersion ?? apiVersionConfiguration.DefaultVersion.MajorVersion}";
+            string versionName =
+                $"v{versioningFeature.RequestedApiVersion?.MajorVersion ?? apiVersionConfiguration.DefaultVersion.MajorVersion}";
             ApiVersionInfo? versionInfo = apiVersionConfiguration.GetVersionInfo(versionName);
 
             if (versionInfo != null)
@@ -60,23 +61,27 @@ public class ApiVersioningDeprecationMiddleware(RequestDelegate next, ApiVersion
                 {
                     context.Response.StatusCode = StatusCodes.Status410Gone;
                     context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsJsonAsync(new
-                    {
-                        type = "https://httpstatuses.io/410",
-                        title = "Gone",
-                        status = 410,
-                        detail = $"API version {versionName} has reached end-of-life and no longer accepts requests.",
-                        instance = context.Request.Path.Value,
-                        migrateToVersion = apiVersionConfiguration.DefaultVersion.Version
-                    });
+                    await context.Response.WriteAsJsonAsync(
+                        new
+                        {
+                            type = "https://httpstatuses.io/410",
+                            title = "Gone",
+                            status = 410,
+                            detail = $"API version {versionName} has reached end-of-life and no longer accepts requests.",
+                            instance = context.Request.Path.Value,
+                            migrateToVersion = apiVersionConfiguration.DefaultVersion.Version,
+                        }
+                    );
                     return;
                 }
 
                 if (versionInfo.IsDeprecated)
                 {
                     context.Response.Headers.Append("Deprecation", "true");
-                    context.Response.Headers.Append("X-API-Info",
-                        $"This API version is deprecated. Please migrate to v{apiVersionConfiguration.DefaultVersion.Version}");
+                    context.Response.Headers.Append(
+                        "X-API-Info",
+                        $"This API version is deprecated. Please migrate to v{apiVersionConfiguration.DefaultVersion.Version}"
+                    );
                     if (versionInfo.SunsetDate.HasValue)
                         context.Response.Headers.Append("Sunset", versionInfo.SunsetDate.Value.ToString("R"));
                 }

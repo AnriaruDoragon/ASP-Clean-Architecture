@@ -22,9 +22,7 @@ public static class DependencyInjection
     /// <summary>
     /// Registers Infrastructure layer services with the DI container.
     /// </summary>
-    public static IServiceCollection AddInfrastructure(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // Register interceptors
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
@@ -32,29 +30,33 @@ public static class DependencyInjection
         // Register DbContext
         string? connectionString = configuration.GetConnectionString("DefaultConnection");
 
-        services.AddDbContext<ApplicationDbContext>((sp, options) =>
-        {
-            options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-
-            if (!string.IsNullOrEmpty(connectionString))
+        services.AddDbContext<ApplicationDbContext>(
+            (sp, options) =>
             {
-                options.UseNpgsql(connectionString, npgsqlOptions =>
+                options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
+
+                if (!string.IsNullOrEmpty(connectionString))
                 {
-                    npgsqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
-                    npgsqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 3,
-                        maxRetryDelay: TimeSpan.FromSeconds(30),
-                        errorCodesToAdd: null);
-                });
+                    options.UseNpgsql(
+                        connectionString,
+                        npgsqlOptions =>
+                        {
+                            npgsqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+                            npgsqlOptions.EnableRetryOnFailure(
+                                maxRetryCount: 3,
+                                maxRetryDelay: TimeSpan.FromSeconds(30),
+                                errorCodesToAdd: null
+                            );
+                        }
+                    );
+                }
             }
-        });
+        );
 
         // Register interfaces
-        services.AddScoped<IApplicationDbContext>(sp =>
-            sp.GetRequiredService<ApplicationDbContext>());
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-        services.AddScoped<IUnitOfWork>(sp =>
-            sp.GetRequiredService<ApplicationDbContext>());
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
         // Register services
         services.AddScoped<IDateTimeProvider, DateTimeProvider>();
@@ -68,8 +70,7 @@ public static class DependencyInjection
         // Register Health Checks
         if (!string.IsNullOrEmpty(connectionString))
         {
-            services.AddHealthChecks()
-                .AddNpgSql(connectionString, name: "database", tags: ["ready"]);
+            services.AddHealthChecks().AddNpgSql(connectionString, name: "database", tags: ["ready"]);
         }
         else
         {
@@ -86,7 +87,8 @@ public static class DependencyInjection
             {
                 case "redis":
                     services.AddSingleton<IConnectionMultiplexer>(_ =>
-                        ConnectionMultiplexer.Connect(cacheSettings.Redis.ConnectionString));
+                        ConnectionMultiplexer.Connect(cacheSettings.Redis.ConnectionString)
+                    );
                     services.AddSingleton<ICacheService, RedisCacheService>();
                     break;
 
@@ -110,14 +112,16 @@ public static class DependencyInjection
 
         // Register Background Jobs
         services.Configure<BackgroundJobSettings>(configuration.GetSection(BackgroundJobSettings.SectionName));
-        BackgroundJobSettings jobSettings = configuration.GetSection(BackgroundJobSettings.SectionName)
-                                                .Get<BackgroundJobSettings>() ?? new BackgroundJobSettings();
+        BackgroundJobSettings jobSettings =
+            configuration.GetSection(BackgroundJobSettings.SectionName).Get<BackgroundJobSettings>()
+            ?? new BackgroundJobSettings();
 
         switch (jobSettings.Provider)
         {
             case BackgroundJobProvider.Memory:
                 var inMemoryService = new InMemoryJobService(
-                    Microsoft.Extensions.Logging.Abstractions.NullLogger<InMemoryJobService>.Instance);
+                    Microsoft.Extensions.Logging.Abstractions.NullLogger<InMemoryJobService>.Instance
+                );
                 services.AddSingleton(inMemoryService);
                 services.AddSingleton<IBackgroundJobService>(inMemoryService);
                 services.AddHostedService<BackgroundJobWorker>();
@@ -137,26 +141,26 @@ public static class DependencyInjection
         JwtSettings? jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
         if (jwtSettings is not null)
         {
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
+            services
+                .AddAuthentication(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
-                    ClockSkew = TimeSpan.Zero // No tolerance for token expiration
-                };
-            });
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwtSettings.Issuer,
+                        ValidAudience = jwtSettings.Audience,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+                        ClockSkew = TimeSpan.Zero, // No tolerance for token expiration
+                    };
+                });
         }
 
         return services;

@@ -11,9 +11,8 @@ namespace Application.Features.Auth.Commands.SendVerificationEmail;
 /// </summary>
 public sealed record SendVerificationEmailCommand(Guid UserId) : IRequest<Result>;
 
-public sealed class SendVerificationEmailCommandHandler(
-    IApplicationDbContext context,
-    IEmailService emailService) : IRequestHandler<SendVerificationEmailCommand, Result>
+public sealed class SendVerificationEmailCommandHandler(IApplicationDbContext context, IEmailService emailService)
+    : IRequestHandler<SendVerificationEmailCommand, Result>
 {
     public async Task<Result> Handle(SendVerificationEmailCommand request, CancellationToken cancellationToken)
     {
@@ -30,8 +29,8 @@ public sealed class SendVerificationEmailCommandHandler(
         }
 
         // Invalidate existing tokens
-        List<EmailVerificationToken> existingTokens = await context.EmailVerificationTokens
-            .Where(t => t.UserId == user.Id && !t.IsUsed)
+        List<EmailVerificationToken> existingTokens = await context
+            .EmailVerificationTokens.Where(t => t.UserId == user.Id && !t.IsUsed)
             .ToListAsync(cancellationToken);
 
         foreach (EmailVerificationToken token in existingTokens)
@@ -45,18 +44,21 @@ public sealed class SendVerificationEmailCommandHandler(
         await context.SaveChangesAsync(cancellationToken);
 
         // Send email
-        await emailService.SendAsync(new EmailMessage
-        {
-            To = user.Email,
-            Subject = "Verify Your Email Address",
-            Body = $"""
+        await emailService.SendAsync(
+            new EmailMessage
+            {
+                To = user.Email,
+                Subject = "Verify Your Email Address",
+                Body = $"""
                 <h2>Email Verification</h2>
                 <p>Please verify your email address using the following token:</p>
                 <p><strong>{verificationToken.Token}</strong></p>
                 <p>This token will expire in 24 hours.</p>
                 <p>If you didn't create an account, please ignore this email.</p>
-                """
-        }, cancellationToken);
+                """,
+            },
+            cancellationToken
+        );
 
         return Result.Success();
     }

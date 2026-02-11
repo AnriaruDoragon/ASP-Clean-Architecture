@@ -13,7 +13,8 @@ public interface ICacheService
     /// <param name="key">The cache key.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The cached value or null if not found.</returns>
-    public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) where T : class;
+    public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+        where T : class;
 
     /// <summary>
     /// Sets a value in cache with optional expiration.
@@ -23,7 +24,13 @@ public interface ICacheService
     /// <param name="value">The value to cache.</param>
     /// <param name="expiration">Optional expiration time.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default) where T : class;
+    public Task SetAsync<T>(
+        string key,
+        T value,
+        TimeSpan? expiration = null,
+        CancellationToken cancellationToken = default
+    )
+        where T : class;
 
     /// <summary>
     /// Removes a value from cache.

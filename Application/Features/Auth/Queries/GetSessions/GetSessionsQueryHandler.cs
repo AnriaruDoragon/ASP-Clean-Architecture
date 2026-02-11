@@ -5,24 +5,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Auth.Queries.GetSessions;
 
-public sealed class GetSessionsQueryHandler(
-    IApplicationDbContext context,
-    ICurrentUserService currentUserService) : IQueryHandler<GetSessionsQuery, IReadOnlyList<SessionDto>>
+public sealed class GetSessionsQueryHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+    : IQueryHandler<GetSessionsQuery, IReadOnlyList<SessionDto>>
 {
     public async Task<Result<IReadOnlyList<SessionDto>>> Handle(
         GetSessionsQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         Guid? userId = currentUserService.UserId;
 
         if (userId is null)
         {
             return Result.Failure<IReadOnlyList<SessionDto>>(
-                Error.Unauthorized("Auth.NotAuthenticated", "User is not authenticated."));
+                Error.Unauthorized("Auth.NotAuthenticated", "User is not authenticated.")
+            );
         }
 
-        List<SessionDto> sessions = await context.RefreshTokens
-            .Where(rt => rt.UserId == userId && !rt.IsRevoked && rt.ExpiresAt > DateTime.UtcNow)
+        List<SessionDto> sessions = await context
+            .RefreshTokens.Where(rt => rt.UserId == userId && !rt.IsRevoked && rt.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(rt => rt.CreatedAt)
             .Select(rt => new SessionDto(
                 rt.Id,
@@ -30,7 +31,8 @@ public sealed class GetSessionsQueryHandler(
                 rt.UserAgent,
                 rt.CreatedAt,
                 rt.ExpiresAt,
-                rt.Token == request.CurrentRefreshToken))
+                rt.Token == request.CurrentRefreshToken
+            ))
             .ToListAsync(cancellationToken);
 
         return sessions;

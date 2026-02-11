@@ -27,7 +27,7 @@ public sealed class PasswordResetToken : BaseEntity
             Token = GenerateSecureToken(),
             ExpiresAt = DateTime.UtcNow.Add(validFor ?? TimeSpan.FromHours(1)),
             IsUsed = false,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
     }
 
@@ -46,9 +46,6 @@ public sealed class PasswordResetToken : BaseEntity
         byte[] tokenBytes = new byte[32];
         using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
         rng.GetBytes(tokenBytes);
-        return Convert.ToBase64String(tokenBytes)
-            .Replace("+", "-")
-            .Replace("/", "_")
-            .TrimEnd('=');
+        return Convert.ToBase64String(tokenBytes).Replace("+", "-").Replace("/", "_").TrimEnd('=');
     }
 }

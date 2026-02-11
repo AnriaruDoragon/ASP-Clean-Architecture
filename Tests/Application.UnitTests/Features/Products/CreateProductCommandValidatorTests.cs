@@ -1,5 +1,4 @@
 using Application.Features.Products.Commands.CreateProduct;
-using FluentAssertions;
 using FluentValidation.TestHelper;
 using Xunit;
 
@@ -34,8 +33,7 @@ public class CreateProductCommandValidatorTests
         TestValidationResult<CreateProductCommand>? result = _validator.TestValidate(command);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Name)
-            .WithErrorMessage("Product name is required.");
+        result.ShouldHaveValidationErrorFor(x => x.Name).WithErrorMessage("Product name is required.");
     }
 
     [Fact]
@@ -49,7 +47,8 @@ public class CreateProductCommandValidatorTests
         TestValidationResult<CreateProductCommand>? result = _validator.TestValidate(command);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Name)
+        result
+            .ShouldHaveValidationErrorFor(x => x.Name)
             .WithErrorMessage("Product name must not exceed 200 characters.");
     }
 
@@ -64,7 +63,8 @@ public class CreateProductCommandValidatorTests
         TestValidationResult<CreateProductCommand>? result = _validator.TestValidate(command);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Description)
+        result
+            .ShouldHaveValidationErrorFor(x => x.Description)
             .WithErrorMessage("Description must not exceed 1000 characters.");
     }
 
@@ -78,8 +78,7 @@ public class CreateProductCommandValidatorTests
         TestValidationResult<CreateProductCommand>? result = _validator.TestValidate(command);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Price)
-            .WithErrorMessage("Price must be non-negative.");
+        result.ShouldHaveValidationErrorFor(x => x.Price).WithErrorMessage("Price must be non-negative.");
     }
 
     [Fact]
@@ -92,7 +91,8 @@ public class CreateProductCommandValidatorTests
         TestValidationResult<CreateProductCommand>? result = _validator.TestValidate(command);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.StockQuantity)
+        result
+            .ShouldHaveValidationErrorFor(x => x.StockQuantity)
             .WithErrorMessage("Stock quantity must be non-negative.");
     }
 }

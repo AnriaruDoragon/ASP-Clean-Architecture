@@ -12,7 +12,10 @@ namespace Application.Features.Products.Events;
 public sealed class ProductOutOfStockEventHandler(ILogger<ProductOutOfStockEventHandler> logger)
     : INotificationHandler<DomainEventNotification<ProductOutOfStockEvent>>
 {
-    public Task Handle(DomainEventNotification<ProductOutOfStockEvent> notification, CancellationToken cancellationToken)
+    public Task Handle(
+        DomainEventNotification<ProductOutOfStockEvent> notification,
+        CancellationToken cancellationToken
+    )
     {
         ProductOutOfStockEvent domainEvent = notification.DomainEvent;
 
@@ -20,7 +23,8 @@ public sealed class ProductOutOfStockEventHandler(ILogger<ProductOutOfStockEvent
             "Product out of stock: {ProductId} - {ProductName} at {OccurredOn}",
             domainEvent.ProductId,
             domainEvent.ProductName,
-            domainEvent.OccurredOn);
+            domainEvent.OccurredOn
+        );
 
         // Add your business logic here, for example:
         // - Notify inventory management

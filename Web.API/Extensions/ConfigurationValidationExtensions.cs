@@ -39,7 +39,9 @@ public static class ConfigurationValidationExtensions
         }
         else if (jwtSecretKey == "YOUR-SECRET-KEY-MUST-BE-AT-LEAST-32-CHARACTERS-LONG")
         {
-            logger.LogWarning("JWT SecretKey is using the default placeholder value. Please set a secure key in production.");
+            logger.LogWarning(
+                "JWT SecretKey is using the default placeholder value. Please set a secure key in production."
+            );
         }
 
         // Validate JWT issuer and audience
@@ -54,8 +56,7 @@ public static class ConfigurationValidationExtensions
         }
 
         // Log warnings for optional but recommended settings
-        if (string.IsNullOrEmpty(configuration["Email:Host"]) ||
-            configuration.GetValue<bool>("Email:Enabled") == false)
+        if (string.IsNullOrEmpty(configuration["Email:Host"]) || configuration.GetValue<bool>("Email:Enabled") == false)
         {
             logger.LogInformation("Email service is not configured. Email functionality will be disabled.");
         }
@@ -66,7 +67,9 @@ public static class ConfigurationValidationExtensions
             string[]? corsOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
             if (corsOrigins is null || corsOrigins.Length == 0)
             {
-                logger.LogWarning("CORS AllowedOrigins is not configured. All origins will be allowed in development mode only.");
+                logger.LogWarning(
+                    "CORS AllowedOrigins is not configured. All origins will be allowed in development mode only."
+                );
             }
 
             if (configuration.GetValue<bool>("Telemetry:ConsoleExporter"))
@@ -84,7 +87,8 @@ public static class ConfigurationValidationExtensions
             }
 
             throw new InvalidOperationException(
-                $"Configuration validation failed with {errors.Count} error(s). See logs for details.");
+                $"Configuration validation failed with {errors.Count} error(s). See logs for details."
+            );
         }
 
         logger.LogInformation("Configuration validation passed");

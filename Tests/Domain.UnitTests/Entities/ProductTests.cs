@@ -38,8 +38,7 @@ public class ProductTests
         Func<Product> act = () => Product.Create(name!, "Description", 10m, 5);
 
         // Assert
-        act.Should().Throw<DomainException>()
-            .WithMessage("Product name cannot be empty.");
+        act.Should().Throw<DomainException>().WithMessage("Product name cannot be empty.");
     }
 
     [Fact]
@@ -49,8 +48,7 @@ public class ProductTests
         Func<Product> act = () => Product.Create("Product", "Description", -10m, 5);
 
         // Assert
-        act.Should().Throw<DomainException>()
-            .WithMessage("Product price cannot be negative.");
+        act.Should().Throw<DomainException>().WithMessage("Product price cannot be negative.");
     }
 
     [Fact]
@@ -60,8 +58,7 @@ public class ProductTests
         Func<Product> act = () => Product.Create("Product", "Description", 10m, -5);
 
         // Assert
-        act.Should().Throw<DomainException>()
-            .WithMessage("Stock quantity cannot be negative.");
+        act.Should().Throw<DomainException>().WithMessage("Stock quantity cannot be negative.");
     }
 
     [Fact]
@@ -118,8 +115,7 @@ public class ProductTests
         Action act = () => product.AdjustStock(-10);
 
         // Assert
-        act.Should().Throw<DomainException>()
-            .WithMessage("Insufficient stock.");
+        act.Should().Throw<DomainException>().WithMessage("Insufficient stock.");
     }
 
     [Fact]

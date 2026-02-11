@@ -10,7 +10,8 @@ public static class HttpsExtensions
     /// </summary>
     public static IApplicationBuilder UseConditionalHttpsRedirection(
         this IApplicationBuilder app,
-        IConfiguration configuration)
+        IConfiguration configuration
+    )
     {
         bool enforceHttps = configuration.GetValue("Security:EnforceHttps", true);
 

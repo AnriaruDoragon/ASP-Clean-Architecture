@@ -18,7 +18,7 @@ public enum Per
     /// <summary>
     /// Rate limit per session (refresh token, falls back to User, then IP).
     /// </summary>
-    Session
+    Session,
 }
 
 /// <summary>

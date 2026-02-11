@@ -9,6 +9,5 @@ namespace Web.API.Controllers.V1;
 public class DefaultController : Controller
 {
     [HttpGet]
-    public IActionResult Index() =>
-        Ok(new { message = "Hello World!" });
+    public IActionResult Index() => Ok(new { message = "Hello World!" });
 }

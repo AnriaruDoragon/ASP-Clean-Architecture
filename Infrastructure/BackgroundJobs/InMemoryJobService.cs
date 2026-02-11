@@ -15,15 +15,14 @@ public sealed record BackgroundJob(string Name, object Payload, DateTime? Schedu
 /// </summary>
 public sealed class InMemoryJobService(ILogger<InMemoryJobService> logger) : IBackgroundJobService
 {
-    private readonly Channel<BackgroundJob> _channel = Channel.CreateUnbounded<BackgroundJob>(new UnboundedChannelOptions
-    {
-        SingleReader = true,
-        SingleWriter = false
-    });
+    private readonly Channel<BackgroundJob> _channel = Channel.CreateUnbounded<BackgroundJob>(
+        new UnboundedChannelOptions { SingleReader = true, SingleWriter = false }
+    );
 
     internal ChannelReader<BackgroundJob> Reader => _channel.Reader;
 
-    public async Task EnqueueAsync<T>(T job, CancellationToken cancellationToken = default) where T : class
+    public async Task EnqueueAsync<T>(T job, CancellationToken cancellationToken = default)
+        where T : class
     {
         var jobItem = new BackgroundJob(typeof(T).Name, job);
         await _channel.Writer.WriteAsync(jobItem, cancellationToken);
@@ -37,7 +36,8 @@ public sealed class InMemoryJobService(ILogger<InMemoryJobService> logger) : IBa
         logger.LogDebug("Enqueued named job {JobName}", jobName);
     }
 
-    public async Task ScheduleAsync<T>(T job, TimeSpan delay, CancellationToken cancellationToken = default) where T : class
+    public async Task ScheduleAsync<T>(T job, TimeSpan delay, CancellationToken cancellationToken = default)
+        where T : class
     {
         DateTime scheduledAt = DateTime.UtcNow.Add(delay);
         var jobItem = new BackgroundJob(typeof(T).Name, job, scheduledAt);

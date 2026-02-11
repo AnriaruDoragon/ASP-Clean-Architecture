@@ -137,6 +137,9 @@
   ],
   "sources": [
     {
+      "rename": {
+        "gitignore": ".gitignore"
+      },
       "modifiers": [
         {
           "condition": "(!IncludeExamples)",
@@ -146,8 +149,10 @@
             "Domain/Events/ProductDeletedEvent.cs",
             "Domain/Events/ProductOutOfStockEvent.cs",
             "Application/Features/Products/**",
+            "Application/Features/Files/**",
             "Infrastructure/Data/Configs/ProductConfiguration.cs",
             "Web.API/Controllers/V1/ProductsController.cs",
+            "Web.API/Controllers/V1/FilesController.cs",
             "Tests/Domain.UnitTests/Entities/ProductTests.cs",
             "Tests/Application.UnitTests/Features/Products/**",
             "Tests/Web.API.IntegrationTests/ProductsControllerTests.cs",
@@ -179,6 +184,7 @@
             "**/.vs/**",
             ".claude/**",
             ".git/**",
+            ".gitignore",
             "*.user",
             ".env",
             "Infrastructure/Data/Migrations/**"

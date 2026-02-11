@@ -63,12 +63,16 @@ tasks:
   format:
     desc: Format code
     aliases: [fmt]
-    cmd: dotnet format {{.CLI_ARGS}}
+    cmds:
+      - dotnet format {{.CLI_ARGS}}
+      - dotnet csharpier format .
 
   format:check:
     desc: Check code formatting
     aliases: [fmt:check]
-    cmd: dotnet format --verify-no-changes {{.CLI_ARGS}}
+    cmds:
+      - dotnet format --verify-no-changes {{.CLI_ARGS}}
+      - dotnet csharpier check .
 
 #if (IncludeTests)
   # ============================================================================
@@ -307,7 +311,9 @@ tasks:
 
   ci:format:
     desc: "[CI] Check formatting"
-    cmd: dotnet format --verify-no-changes
+    cmds:
+      - dotnet format --verify-no-changes
+      - dotnet csharpier check .
 #endif
 
 #if (IncludeExamples)

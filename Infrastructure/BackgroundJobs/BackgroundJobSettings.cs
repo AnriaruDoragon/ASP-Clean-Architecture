@@ -18,7 +18,7 @@ public enum BackgroundJobProvider
     /// <summary>
     /// Disabled - jobs are dropped.
     /// </summary>
-    None
+    None,
 }
 
 /// <summary>

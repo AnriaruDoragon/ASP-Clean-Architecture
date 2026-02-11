@@ -15,13 +15,12 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IUnitOfWor
     private readonly IDomainEventDispatcher? _domainEventDispatcher;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
+        : base(options) { }
 
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options,
-        IDomainEventDispatcher domainEventDispatcher)
+        IDomainEventDispatcher domainEventDispatcher
+    )
         : base(options)
     {
         _domainEventDispatcher = domainEventDispatcher;
@@ -68,9 +67,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IUnitOfWor
             .Select(e => e.Entity)
             .ToList();
 
-        var domainEvents = entities
-            .SelectMany(e => e.DomainEvents)
-            .ToList();
+        var domainEvents = entities.SelectMany(e => e.DomainEvents).ToList();
 
         entities.ForEach(e => e.ClearDomainEvents());
 

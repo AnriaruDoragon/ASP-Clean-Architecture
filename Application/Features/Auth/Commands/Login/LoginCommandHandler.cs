@@ -10,22 +10,25 @@ public sealed class LoginCommandHandler(
     IApplicationDbContext context,
     IPasswordHasher passwordHasher,
     IJwtService jwtService,
-    IDateTimeProvider dateTimeProvider) : ICommandHandler<LoginCommand, AuthTokens>
+    IDateTimeProvider dateTimeProvider
+) : ICommandHandler<LoginCommand, AuthTokens>
 {
-    public async Task<Result<AuthTokens>> Handle(
-        LoginCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Result<AuthTokens>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         // Find user by email
-        User? user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.InvariantCultureIgnoreCase), cancellationToken);
+        string normalizedEmail = request.Email.ToLowerInvariant();
+        User? user = await context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
 
         if (user is null)
-            return Result.Failure<AuthTokens>(Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password."));
+            return Result.Failure<AuthTokens>(
+                Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password.")
+            );
 
         // Verify password
         if (!passwordHasher.Verify(request.Password, user.PasswordHash))
-            return Result.Failure<AuthTokens>(Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password."));
+            return Result.Failure<AuthTokens>(
+                Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password.")
+            );
 
         // Create refresh token
         string refreshTokenValue = jwtService.GenerateRefreshToken();
@@ -34,7 +37,8 @@ public sealed class LoginCommandHandler(
             refreshTokenValue,
             dateTimeProvider.UtcNow.AddDays(7),
             request.DeviceName,
-            request.UserAgent);
+            request.UserAgent
+        );
 
         context.RefreshTokens.Add(refreshToken);
         await context.SaveChangesAsync(cancellationToken);
@@ -42,9 +46,6 @@ public sealed class LoginCommandHandler(
         // Generate access token
         string accessToken = jwtService.GenerateAccessToken(user);
 
-        return new AuthTokens(
-            accessToken,
-            refreshTokenValue,
-            dateTimeProvider.UtcNow.AddMinutes(15));
+        return new AuthTokens(accessToken, refreshTokenValue, dateTimeProvider.UtcNow.AddMinutes(15));
     }
 }

@@ -15,8 +15,7 @@ public abstract class BaseEntityConfiguration<T> : IEntityTypeConfiguration<T>
     {
         builder.HasKey(e => e.Id);
 
-        builder.Property(e => e.Id)
-            .ValueGeneratedNever(); // Id is set by the entity
+        builder.Property(e => e.Id).ValueGeneratedNever(); // Id is set by the entity
 
         // Ignore domain events - they are not persisted
         builder.Ignore(e => e.DomainEvents);
@@ -34,7 +33,6 @@ public abstract class AuditableEntityConfiguration<T> : BaseEntityConfiguration<
     {
         base.Configure(builder);
 
-        builder.Property(e => e.CreatedAt)
-            .IsRequired();
+        builder.Property(e => e.CreatedAt).IsRequired();
     }
 }

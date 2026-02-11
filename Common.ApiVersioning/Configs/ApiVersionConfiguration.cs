@@ -100,7 +100,16 @@ public class ApiVersionConfiguration
     /// These versions will accept API requests without deprecation warnings.
     /// </remarks>
     public IEnumerable<ApiVersionInfo> GetActiveVersions() =>
-        Versions.Where(v => v.Status is not (VersionStatus.Legacy or VersionStatus.Deprecated or VersionStatus.Sunset or VersionStatus.Retired or VersionStatus.Obsolete));
+        Versions.Where(v =>
+            v.Status
+                is not (
+                    VersionStatus.Legacy
+                    or VersionStatus.Deprecated
+                    or VersionStatus.Sunset
+                    or VersionStatus.Retired
+                    or VersionStatus.Obsolete
+                )
+        );
 
     /// <summary>
     /// Gets the default API version to use when clients don't specify a version.
@@ -158,14 +167,17 @@ public class ApiVersionConfiguration
     {
         if (Versions.Count == 0)
         {
-            Versions.Add(new ApiVersionInfo
-            {
-                Name = "v1",
-                Version = "1.0.0",
-                Status = VersionStatus.Active,
-                Title = "API",
-                Description = "Default API version. See ApiVersioning README.md for more information about customizing API versions.",
-            });
+            Versions.Add(
+                new ApiVersionInfo
+                {
+                    Name = "v1",
+                    Version = "1.0.0",
+                    Status = VersionStatus.Active,
+                    Title = "API",
+                    Description =
+                        "Default API version. See ApiVersioning README.md for more information about customizing API versions.",
+                }
+            );
         }
 
         if (Versions.All(v => v.Status is not (VersionStatus.Active or VersionStatus.Current)))
@@ -181,7 +193,9 @@ public class ApiVersionConfiguration
             throw new InvalidOperationException("Version cannot be empty");
 
         if (Versions.Any(v => !IsValidSemanticVersion(v.Version)))
-            throw new InvalidOperationException("Versions must follow semantic versioning format (Major.Minor.Patch), e.g., '1.0.0'");
+            throw new InvalidOperationException(
+                "Versions must follow semantic versioning format (Major.Minor.Patch), e.g., '1.0.0'"
+            );
     }
 
     private static bool IsValidSemanticVersion(string version)

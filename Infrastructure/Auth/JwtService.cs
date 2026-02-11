@@ -28,7 +28,7 @@ public sealed class JwtService(IOptions<JwtSettings> options) : IJwtService
         Claim[] claims =
         [
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         ];
 
         var token = new JwtSecurityToken(
@@ -36,7 +36,8 @@ public sealed class JwtService(IOptions<JwtSettings> options) : IJwtService
             audience: _settings.Audience,
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(_settings.AccessTokenExpirationMinutes),
-            signingCredentials: credentials);
+            signingCredentials: credentials
+        );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
@@ -71,12 +72,12 @@ public sealed class JwtService(IOptions<JwtSettings> options) : IJwtService
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = _settings.Issuer,
                 ValidAudience = _settings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(key)
+                IssuerSigningKey = new SymmetricSecurityKey(key),
             };
 
             ClaimsPrincipal? principal = tokenHandler.ValidateToken(token, parameters, out _);
-            Claim? userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)
-                                 ?? principal.FindFirst(JwtRegisteredClaimNames.Sub);
+            Claim? userIdClaim =
+                principal.FindFirst(ClaimTypes.NameIdentifier) ?? principal.FindFirst(JwtRegisteredClaimNames.Sub);
 
             if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
                 return null;

@@ -8,8 +8,8 @@ namespace Web.API.Authorization;
 /// <summary>
 /// Custom policy provider that creates policies dynamically for role-based authorization.
 /// </summary>
-public sealed class AuthorizationPolicyProvider(
-    IOptions<AuthorizationOptions> options) : DefaultAuthorizationPolicyProvider(options)
+public sealed class AuthorizationPolicyProvider(IOptions<AuthorizationOptions> options)
+    : DefaultAuthorizationPolicyProvider(options)
 {
     public override async Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {

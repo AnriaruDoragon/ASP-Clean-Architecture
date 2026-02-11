@@ -28,13 +28,10 @@ public class ProductsController(ISender sender) : ControllerBase
     [ProducesResponseType<PagedList<ProductDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetProducts(
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10,
-        [FromQuery] bool? isActive = null,
-        [FromQuery] string? searchTerm = null,
-        CancellationToken cancellationToken = default)
+        [FromQuery] GetProductsQuery query,
+        CancellationToken cancellationToken = default
+    )
     {
-        var query = new GetProductsQuery(pageNumber, pageSize, isActive, searchTerm);
         Result<PagedList<ProductDto>> result = await sender.Send(query, cancellationToken);
 
         return result.ToActionResult();
@@ -47,9 +44,7 @@ public class ProductsController(ISender sender) : ControllerBase
     [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetProduct(
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetProduct(Guid id, CancellationToken cancellationToken = default)
     {
         var query = new GetProductByIdQuery(id);
         Result<ProductDto> result = await sender.Send(query, cancellationToken);
@@ -66,14 +61,14 @@ public class ProductsController(ISender sender) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateProduct(
         CreateProductCommand command,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         Result<Guid> result = await sender.Send(command, cancellationToken);
 
-        return result.ToActionResult(id => CreatedAtAction(
-            nameof(GetProduct),
-            new { id },
-            new CreateProductResponse(id)));
+        return result.ToActionResult(id =>
+            CreatedAtAction(nameof(GetProduct), new { id }, new CreateProductResponse(id))
+        );
     }
 
     /// <summary>
@@ -87,13 +82,10 @@ public class ProductsController(ISender sender) : ControllerBase
     public async Task<IActionResult> UpdateProduct(
         Guid id,
         UpdateProductRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var command = new UpdateProductCommand(
-            id,
-            request.Name,
-            request.Description,
-            request.Price);
+        var command = new UpdateProductCommand(id, request.Name, request.Description, request.Price);
 
         Result result = await sender.Send(command, cancellationToken);
 
@@ -107,9 +99,7 @@ public class ProductsController(ISender sender) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> DeleteProduct(
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> DeleteProduct(Guid id, CancellationToken cancellationToken = default)
     {
         var command = new DeleteProductCommand(id);
         Result result = await sender.Send(command, cancellationToken);
@@ -129,7 +119,4 @@ public sealed record CreateProductResponse(Guid Id);
 /// <remarks>
 /// Id is provided via route parameter, not in the request body.
 /// </remarks>
-public sealed record UpdateProductRequest(
-    string Name,
-    string? Description,
-    decimal Price);
+public sealed record UpdateProductRequest(string Name, string? Description, decimal Price);

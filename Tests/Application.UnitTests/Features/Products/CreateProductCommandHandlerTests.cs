@@ -31,7 +31,8 @@ public class CreateProductCommandHandlerTests
             Name: "Test Product",
             Description: "Test Description",
             Price: 99.99m,
-            StockQuantity: 10);
+            StockQuantity: 10
+        );
 
         // Act
         Result<Guid> result = await _handler.Handle(command, CancellationToken.None);
@@ -40,11 +41,16 @@ public class CreateProductCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
-        _products.Received(1).Add(Arg.Is<Product>(p =>
-            p.Name == command.Name &&
-            p.Description == command.Description &&
-            p.Price == command.Price &&
-            p.StockQuantity == command.StockQuantity));
+        _products
+            .Received(1)
+            .Add(
+                Arg.Is<Product>(p =>
+                    p.Name == command.Name
+                    && p.Description == command.Description
+                    && p.Price == command.Price
+                    && p.StockQuantity == command.StockQuantity
+                )
+            );
 
         await _context.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -57,7 +63,8 @@ public class CreateProductCommandHandlerTests
             Name: "Test Product",
             Description: null,
             Price: 49.99m,
-            StockQuantity: 5);
+            StockQuantity: 5
+        );
 
         // Act
         Result<Guid> result = await _handler.Handle(command, CancellationToken.None);
@@ -66,8 +73,6 @@ public class CreateProductCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
-        _products.Received(1).Add(Arg.Is<Product>(p =>
-            p.Name == command.Name &&
-            p.Description == null));
+        _products.Received(1).Add(Arg.Is<Product>(p => p.Name == command.Name && p.Description == null));
     }
 }

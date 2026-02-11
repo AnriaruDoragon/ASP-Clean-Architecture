@@ -19,8 +19,7 @@ Env.TraversePath().Load();
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Configure Serilog
-builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
+builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
 // Add services from each layer
 builder.Services.AddApplication();
@@ -41,10 +40,9 @@ builder.Services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, EmailVerifiedAuthorizationHandler>();
 
 // Configure authorization - require authentication by default
-builder.Services.AddAuthorizationBuilder()
-    .SetFallbackPolicy(new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build());
+builder
+    .Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 builder.Services.AddControllers();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
@@ -64,6 +62,8 @@ app.UseSecurityHeaders();
 app.UseCorrelationId();
 app.UseRequestLogging();
 
+app.UseCors();
+
 if (app.Environment.IsDevelopment())
 {
     // Enable Scalar UI for OpenApi
@@ -72,8 +72,6 @@ if (app.Environment.IsDevelopment())
 
 // Conditional HTTPS based on configuration
 app.UseConditionalHttpsRedirection(app.Configuration);
-
-app.UseCors();
 app.UseRateLimiter();
 
 // Handle API versions lifecycle

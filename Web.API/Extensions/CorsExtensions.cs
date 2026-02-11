@@ -14,7 +14,8 @@ public static class CorsExtensions
     public static IServiceCollection AddCorsPolicy(
         this IServiceCollection services,
         IConfiguration configuration,
-        IHostEnvironment environment)
+        IHostEnvironment environment
+    )
     {
         string[] allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
@@ -30,28 +31,21 @@ public static class CorsExtensions
                     if (hasWildcards)
                     {
                         // Use custom origin validation for wildcard support
-                        var patterns = allowedOrigins
-                            .Select(CreateRegexPattern)
-                            .ToList();
+                        var patterns = allowedOrigins.Select(CreateRegexPattern).ToList();
 
-                        policy.SetIsOriginAllowed(origin =>
-                            patterns.Any(p => p.IsMatch(origin)));
+                        policy.SetIsOriginAllowed(origin => patterns.Any(p => p.IsMatch(origin)));
                     }
                     else
                     {
                         policy.WithOrigins(allowedOrigins);
                     }
 
-                    policy.AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials();
+                    policy.AllowAnyMethod().AllowAnyHeader().AllowCredentials();
                 }
                 else if (environment.IsDevelopment())
                 {
                     // Allow any origin in development when none configured
-                    policy.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
+                    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
                 }
             });
         });
@@ -63,8 +57,7 @@ public static class CorsExtensions
     {
         // Convert wildcard pattern to regex
         // *.example.com -> ^https?://[^/]+\.example\.com$
-        string escaped = Regex.Escape(origin)
-            .Replace("\\*", "[^/]+");
+        string escaped = Regex.Escape(origin).Replace("\\*", "[^/]+");
 
         return new Regex($"^{escaped}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     }

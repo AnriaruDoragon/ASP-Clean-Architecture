@@ -20,7 +20,8 @@ public sealed class ProductCreatedEventHandler(ILogger<ProductCreatedEventHandle
             "Product created: {ProductId} - {ProductName} at {OccurredOn}",
             domainEvent.ProductId,
             domainEvent.ProductName,
-            domainEvent.OccurredOn);
+            domainEvent.OccurredOn
+        );
 
         // Add your business logic here, for example:
         // - Send notification emails

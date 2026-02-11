@@ -29,20 +29,24 @@ public class HealthController(HealthCheckService healthCheckService) : Controlle
     {
         HealthReport report = await healthCheckService.CheckHealthAsync(
             predicate: check => check.Tags.Contains("ready"),
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken
+        );
 
         var response = new HealthResponse
         {
             Status = report.Status.ToString(),
             Duration = report.TotalDuration.TotalMilliseconds,
-            Entries = [.. report.Entries.Select(e => new HealthEntryResponse
-            {
-                Name = e.Key,
-                Status = e.Value.Status.ToString(),
-                Duration = e.Value.Duration.TotalMilliseconds,
-                Description = e.Value.Description,
-                Error = e.Value.Exception?.Message
-            })]
+            Entries =
+            [
+                .. report.Entries.Select(e => new HealthEntryResponse
+                {
+                    Name = e.Key,
+                    Status = e.Value.Status.ToString(),
+                    Duration = e.Value.Duration.TotalMilliseconds,
+                    Description = e.Value.Description,
+                    Error = e.Value.Exception?.Message,
+                }),
+            ],
         };
 
         return report.Status == HealthStatus.Healthy

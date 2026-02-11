@@ -12,8 +12,8 @@ namespace Infrastructure.BackgroundJobs;
 public sealed class BackgroundJobWorker(
     InMemoryJobService jobService,
     IServiceScopeFactory scopeFactory,
-    ILogger<BackgroundJobWorker> logger)
-    : BackgroundService
+    ILogger<BackgroundJobWorker> logger
+) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {

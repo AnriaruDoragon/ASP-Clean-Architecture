@@ -5,13 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Auth.Commands.Logout;
 
-public sealed class LogoutCommandHandler(
-    IApplicationDbContext context,
-    ICurrentUserService currentUserService) : ICommandHandler<LogoutCommand>
+public sealed class LogoutCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+    : ICommandHandler<LogoutCommand>
 {
-    public async Task<Result> Handle(
-        LogoutCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
         Guid? userId = currentUserService.UserId;
 
@@ -21,8 +18,10 @@ public sealed class LogoutCommandHandler(
         if (request.RefreshToken is not null)
         {
             // Revoke specific session
-            Domain.Entities.RefreshToken? refreshToken = await context.RefreshTokens
-                .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && rt.UserId == userId, cancellationToken);
+            Domain.Entities.RefreshToken? refreshToken = await context.RefreshTokens.FirstOrDefaultAsync(
+                rt => rt.Token == request.RefreshToken && rt.UserId == userId,
+                cancellationToken
+            );
 
             if (refreshToken is not null && !refreshToken.IsRevoked)
             {
@@ -32,8 +31,8 @@ public sealed class LogoutCommandHandler(
         else
         {
             // Revoke all sessions (logout from all devices)
-            List<Domain.Entities.RefreshToken> activeTokens = await context.RefreshTokens
-                .Where(rt => rt.UserId == userId && !rt.IsRevoked)
+            List<Domain.Entities.RefreshToken> activeTokens = await context
+                .RefreshTokens.Where(rt => rt.UserId == userId && !rt.IsRevoked)
                 .ToListAsync(cancellationToken);
 
             foreach (Domain.Entities.RefreshToken token in activeTokens)

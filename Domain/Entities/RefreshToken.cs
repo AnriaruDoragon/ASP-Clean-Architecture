@@ -29,7 +29,8 @@ public sealed class RefreshToken : BaseEntity
         string token,
         DateTime expiresAt,
         string? deviceName = null,
-        string? userAgent = null)
+        string? userAgent = null
+    )
     {
         return new RefreshToken
         {
@@ -40,7 +41,7 @@ public sealed class RefreshToken : BaseEntity
             CreatedAt = DateTime.UtcNow,
             IsRevoked = false,
             DeviceName = deviceName,
-            UserAgent = userAgent
+            UserAgent = userAgent,
         };
     }
 
