@@ -112,10 +112,9 @@ public class AuthController(ISender sender) : ControllerBase
     [ProducesResponseType<IReadOnlyList<SessionDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetSessions(
-        [FromQuery] string? currentRefreshToken,
+        [FromQuery] GetSessionsQuery query,
         CancellationToken cancellationToken)
     {
-        var query = new GetSessionsQuery(currentRefreshToken);
         Result<IReadOnlyList<SessionDto>> result = await sender.Send(query, cancellationToken);
 
         return result.ToActionResult();

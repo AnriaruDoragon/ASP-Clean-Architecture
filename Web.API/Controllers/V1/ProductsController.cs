@@ -28,13 +28,9 @@ public class ProductsController(ISender sender) : ControllerBase
     [ProducesResponseType<PagedList<ProductDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetProducts(
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10,
-        [FromQuery] bool? isActive = null,
-        [FromQuery] string? searchTerm = null,
+        [FromQuery] GetProductsQuery query,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetProductsQuery(pageNumber, pageSize, isActive, searchTerm);
         Result<PagedList<ProductDto>> result = await sender.Send(query, cancellationToken);
 
         return result.ToActionResult();

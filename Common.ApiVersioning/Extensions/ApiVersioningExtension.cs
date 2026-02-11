@@ -140,8 +140,9 @@ public static class ApiVersioningExtension
                 options.SubstituteApiVersionInUrl = false;
             });
 
-        // Register FluentValidation schema transformer for DI resolution
+        // Register FluentValidation OpenAPI transformers for DI resolution
         services.AddSingleton<FluentValidationSchemaTransformer>();
+        services.AddSingleton<FluentValidationOperationTransformer>();
 
         foreach (ApiVersionInfo apiVersionInfo in apiVersionConfiguration.Versions)
         {
@@ -158,8 +159,14 @@ public static class ApiVersioningExtension
                     return Task.CompletedTask;
                 });
 
-                // Add FluentValidation rules to OpenAPI schema
+                // Fix missing numeric types (.NET 10 omits 'type' for int, double, etc.)
+                options.AddSchemaTransformer<NumericTypeSchemaTransformer>();
+
+                // Add FluentValidation rules to OpenAPI schemas (request bodies)
                 options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
+
+                // Add FluentValidation rules to OpenAPI parameters (query/route)
+                options.AddOperationTransformer<FluentValidationOperationTransformer>();
             });
         }
 
