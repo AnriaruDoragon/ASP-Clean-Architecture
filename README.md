@@ -22,22 +22,23 @@ dotnet new install ./ASPCleanArchitecture
 
 ```bash
 # Default: all features included (with auto-setup)
-dotnet new cleanarch -n MyApp --allow-scripts yes
+dotnet new aspclean -n MyApp --allow-scripts yes
 
 # Without auto-setup (manual post-creation steps)
-dotnet new cleanarch -n MyApp
+dotnet new aspclean -n MyApp
 
 # Without Docker files
-dotnet new cleanarch -n MyApp --IncludeDocker false --allow-scripts yes
+dotnet new aspclean -n MyApp --IncludeDocker false --allow-scripts yes
 
 # Without example Product feature
-dotnet new cleanarch -n MyApp --IncludeExamples false --allow-scripts yes
+dotnet new aspclean -n MyApp --IncludeExamples false --allow-scripts yes
 
 # Minimal: no examples, no docker, no tests
-dotnet new cleanarch -n MyApp --IncludeExamples false --IncludeDocker false --IncludeTests false --allow-scripts yes
+dotnet new aspclean -n MyApp --IncludeExamples false --IncludeDocker false --IncludeTests false --allow-scripts yes
 ```
 
-> **Note:** `--allow-scripts yes` automatically runs post-creation scripts (restore, copy .env, create migration). Without it, you'll be prompted to confirm each action or can run them manually.
+> **Note:** `--allow-scripts yes` automatically runs post-creation scripts (restore, copy .env, create migration).
+> Without it, you'll be prompted to confirm each action or can run them manually.
 
 ### Template Parameters
 
@@ -48,6 +49,8 @@ dotnet new cleanarch -n MyApp --IncludeExamples false --IncludeDocker false --In
 | `--IncludeTests`    | `true`  | Include test projects         |
 
 ### After Creating a Project
+
+We recommend to install [Taskfile](https://taskfile.dev/docs/installation) to use predefined tasks.
 
 With `--allow-scripts yes`, steps 1-3 run automatically.
 
@@ -427,12 +430,12 @@ All endpoints require authentication by default. Use attributes to customize:
 
 | Endpoint              | Method | Description             |
 |-----------------------|--------|-------------------------|
-| `/Auth/register`      | POST   | Register new user       |
-| `/Auth/login`         | POST   | Login, returns tokens   |
-| `/Auth/refresh`       | POST   | Refresh access token    |
-| `/Auth/logout`        | POST   | Revoke refresh token(s) |
-| `/Auth/sessions`      | GET    | List active sessions    |
-| `/Auth/sessions/{id}` | DELETE | Revoke specific session |
+| `/Auth/Register`      | POST   | Register new user       |
+| `/Auth/Login`         | POST   | Login, returns tokens   |
+| `/Auth/Refresh`       | POST   | Refresh access token    |
+| `/Auth/Logout`        | POST   | Revoke refresh token(s) |
+| `/Auth/Sessions`      | GET    | List active sessions    |
+| `/Auth/Sessions/{id}` | DELETE | Revoke specific session |
 
 ### Multi-Device Support
 
@@ -479,7 +482,7 @@ app.MapControllers();
 | Endpoint                  | Description                         |
 |---------------------------|-------------------------------------|
 | `/openapi/{version}.json` | OpenAPI 3.0 specification           |
-| `/scalar/v1`              | Scalar interactive documentation UI |
+| `/scalar`                 | Scalar interactive documentation UI |
 
 For complete documentation including configuration options, version statuses, lifecycle headers, and advanced usage, see **[Common.ApiVersioning/README.md](Common.ApiVersioning/README.md)**.
 
