@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,12 @@ namespace Web.API.Middlewares;
 /// </summary>
 public class GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlerMiddleware> logger)
 {
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+    };
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -46,8 +53,7 @@ public class GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<Glob
         context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = statusCode;
 
-        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, options));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, s_jsonOptions));
     }
 }
 

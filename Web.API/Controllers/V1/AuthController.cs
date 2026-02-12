@@ -9,6 +9,7 @@ using Application.Features.Auth.Commands.ResetPassword;
 using Application.Features.Auth.Commands.RevokeSession;
 using Application.Features.Auth.Commands.SendVerificationEmail;
 using Application.Features.Auth.Commands.VerifyEmail;
+using Application.Features.Auth.Queries.GetCurrentUser;
 using Application.Features.Auth.Queries.GetSessions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -97,6 +98,20 @@ public class AuthController(ISender sender) : ControllerBase
     {
         var command = new LogoutCommand(request?.RefreshToken);
         Result result = await sender.Send(command, cancellationToken);
+
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Get the current authenticated user's profile.
+    /// </summary>
+    [HttpGet("[action]")]
+    [EndpointSummary("Get Current User")]
+    [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Me(CancellationToken cancellationToken = default)
+    {
+        Result<CurrentUserResponse> result = await sender.Send(new GetCurrentUserQuery(), cancellationToken);
 
         return result.ToActionResult();
     }

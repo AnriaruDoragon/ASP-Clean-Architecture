@@ -168,6 +168,9 @@ public static class ApiVersioningExtension
                     // Fix missing numeric types (.NET 10 omits 'type' for int, double, etc.)
                     options.AddSchemaTransformer<NumericTypeSchemaTransformer>();
 
+                    // Convert enum schemas to camelCase strings
+                    options.AddSchemaTransformer<EnumSchemaTransformer>();
+
                     // Add FluentValidation rules to OpenAPI schemas (request bodies)
                     options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
 

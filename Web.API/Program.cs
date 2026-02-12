@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Application;
 using Application.Common.Interfaces;
 using Common.ApiVersioning.Extensions;
@@ -42,7 +44,11 @@ builder
     .Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
-builder.Services.AddControllers();
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase))
+    );
 builder.Services.AddApiVersioningServices(builder.Configuration);
 
 WebApplication app = builder.Build();
