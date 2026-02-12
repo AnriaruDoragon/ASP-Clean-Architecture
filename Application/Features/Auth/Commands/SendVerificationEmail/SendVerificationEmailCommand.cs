@@ -25,7 +25,7 @@ public sealed class SendVerificationEmailCommandHandler(IApplicationDbContext co
 
         if (user.EmailVerified)
         {
-            return Result.Failure(Error.Validation("Email is already verified."));
+            return Result.Failure(Error.Create(ErrorCode.EmailAlreadyVerified));
         }
 
         // Invalidate existing tokens

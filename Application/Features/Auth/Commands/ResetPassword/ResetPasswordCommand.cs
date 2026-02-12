@@ -21,7 +21,7 @@ public sealed class ResetPasswordCommandHandler(IApplicationDbContext context, I
 
         if (user is null)
         {
-            return Result.Failure(Error.Validation("Invalid email or token."));
+            return Result.Failure(Error.Create(ErrorCode.InvalidResetToken, "Invalid email or token."));
         }
 
         PasswordResetToken? resetToken = await context.PasswordResetTokens.FirstOrDefaultAsync(
@@ -31,7 +31,7 @@ public sealed class ResetPasswordCommandHandler(IApplicationDbContext context, I
 
         if (resetToken is null || !resetToken.IsValid())
         {
-            return Result.Failure(Error.Validation("Invalid or expired token."));
+            return Result.Failure(Error.Create(ErrorCode.InvalidResetToken));
         }
 
         // Update password

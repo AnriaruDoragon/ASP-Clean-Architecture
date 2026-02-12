@@ -1,5 +1,6 @@
 using Application.Common.Models;
 using Microsoft.AspNetCore.Mvc;
+using Web.API.Models;
 
 namespace Web.API.Extensions;
 
@@ -31,58 +32,64 @@ public static class ResultExtensions
 
     private static ObjectResult ToProblemDetails(Error error)
     {
-        // Handle validation errors with field-level details
+        var problemDetails = new ErrorProblemDetails
+        {
+            Type = GetTypeUri(error.StatusCode),
+            Title = GetTitle(error.StatusCode),
+            Status = error.StatusCode,
+            Detail = error.Description,
+            ErrorCode = error.Code,
+        };
+
+        // Add field-level validation errors when available
         if (error is ValidationError validationError)
         {
-            var validationProblemDetails = new ValidationProblemDetails(
-                validationError.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-            )
-            {
-                Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-                Title = "One or more validation errors occurred.",
-                Status = StatusCodes.Status400BadRequest,
-            };
+            problemDetails.ErrorCode =
+                validationError.Errors.SelectMany(kvp => kvp.Value).Select(e => e.Code).FirstOrDefault()
+                ?? "ValidationError";
 
-            return new ObjectResult(validationProblemDetails)
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                ContentTypes = { "application/problem+json" },
-            };
+            problemDetails.Errors = validationError.Errors.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Select(e => new FieldErrorDetail { Code = e.Code, Detail = e.Message }).ToArray()
+            );
         }
 
-        int statusCode = error.Code switch
+        // Copy any custom extensions from the Error to ProblemDetails
+        if (error.Extensions is { Count: > 0 })
         {
-            "Error.NotFound" => StatusCodes.Status404NotFound,
-            "Error.Validation" => StatusCodes.Status400BadRequest,
-            "Error.Conflict" => StatusCodes.Status409Conflict,
-            "Error.Unauthorized" => StatusCodes.Status401Unauthorized,
-            "Error.Forbidden" => StatusCodes.Status403Forbidden,
-            _ => StatusCodes.Status500InternalServerError,
-        };
-
-        var problemDetails = new ProblemDetails
-        {
-            Status = statusCode,
-            Title = GetTitle(error.Code),
-            Detail = error.Description,
-            Extensions = { ["errorCode"] = error.Code },
-        };
+            foreach ((string key, object? value) in error.Extensions)
+            {
+                problemDetails.Extensions[key] = value;
+            }
+        }
 
         return new ObjectResult(problemDetails)
         {
-            StatusCode = statusCode,
+            StatusCode = error.StatusCode,
             ContentTypes = { "application/problem+json" },
         };
     }
 
-    private static string GetTitle(string errorCode) =>
-        errorCode switch
+    private static string GetTitle(int statusCode) =>
+        statusCode switch
         {
-            "Error.NotFound" => "Not Found",
-            "Error.Validation" => "Validation Error",
-            "Error.Conflict" => "Conflict",
-            "Error.Unauthorized" => "Unauthorized",
-            "Error.Forbidden" => "Forbidden",
+            400 => "Bad Request",
+            401 => "Unauthorized",
+            403 => "Forbidden",
+            404 => "Not Found",
+            409 => "Conflict",
             _ => "Error",
+        };
+
+    private static string GetTypeUri(int statusCode) =>
+        statusCode switch
+        {
+            400 => "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+            401 => "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+            403 => "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+            404 => "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+            409 => "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+            500 => "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+            _ => "https://tools.ietf.org/html/rfc9110#section-15",
         };
 }

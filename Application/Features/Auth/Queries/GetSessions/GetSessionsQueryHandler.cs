@@ -17,9 +17,7 @@ public sealed class GetSessionsQueryHandler(IApplicationDbContext context, ICurr
 
         if (userId is null)
         {
-            return Result.Failure<IReadOnlyList<SessionDto>>(
-                Error.Unauthorized("Auth.NotAuthenticated", "User is not authenticated.")
-            );
+            return Result.Failure<IReadOnlyList<SessionDto>>(Error.Create(ErrorCode.NotAuthenticated));
         }
 
         List<SessionDto> sessions = await context

@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Web.API.Extensions;
+using Web.API.Models;
 
 namespace Web.API.Controllers.V1;
 
@@ -26,7 +27,7 @@ public class ProductsController(ISender sender) : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType<PagedList<ProductDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetProducts(
         [FromQuery] GetProductsQuery query,
         CancellationToken cancellationToken = default
@@ -42,8 +43,8 @@ public class ProductsController(ISender sender) : ControllerBase
     /// </summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType<ProductDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetProduct(Guid id, CancellationToken cancellationToken = default)
     {
         var query = new GetProductByIdQuery(id);
@@ -57,8 +58,8 @@ public class ProductsController(ISender sender) : ControllerBase
     /// </summary>
     [HttpPost]
     [ProducesResponseType<CreateProductResponse>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateProduct(
         CreateProductCommand command,
         CancellationToken cancellationToken = default
@@ -76,9 +77,9 @@ public class ProductsController(ISender sender) : ControllerBase
     /// </summary>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateProduct(
         Guid id,
         UpdateProductRequest request,
@@ -97,8 +98,8 @@ public class ProductsController(ISender sender) : ControllerBase
     /// </summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteProduct(Guid id, CancellationToken cancellationToken = default)
     {
         var command = new DeleteProductCommand(id);

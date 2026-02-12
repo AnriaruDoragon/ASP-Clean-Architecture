@@ -13,7 +13,7 @@ public sealed class RevokeSessionCommandHandler(IApplicationDbContext context, I
         Guid? userId = currentUserService.UserId;
 
         if (userId is null)
-            return Result.Failure(Error.Unauthorized("Auth.NotAuthenticated", "User is not authenticated."));
+            return Result.Failure(Error.Create(ErrorCode.NotAuthenticated));
 
         Domain.Entities.RefreshToken? session = await context.RefreshTokens.FirstOrDefaultAsync(
             rt => rt.Id == request.SessionId && rt.UserId == userId,

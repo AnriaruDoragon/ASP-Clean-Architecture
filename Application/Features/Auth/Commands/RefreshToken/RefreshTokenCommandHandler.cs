@@ -18,7 +18,7 @@ public sealed class RefreshTokenCommandHandler(
         Guid? userId = jwtService.GetUserIdFromToken(request.AccessToken);
 
         if (userId is null)
-            return Result.Failure<AuthTokens>(Error.Unauthorized("Auth.InvalidToken", "Invalid access token."));
+            return Result.Failure<AuthTokens>(Error.Create(ErrorCode.InvalidToken));
 
         // Find the refresh token
         Domain.Entities.RefreshToken? refreshToken = await context.RefreshTokens.FirstOrDefaultAsync(
@@ -27,15 +27,13 @@ public sealed class RefreshTokenCommandHandler(
         );
 
         if (refreshToken is null || !refreshToken.IsValid)
-            return Result.Failure<AuthTokens>(
-                Error.Unauthorized("Auth.InvalidRefreshToken", "Invalid or expired refresh token.")
-            );
+            return Result.Failure<AuthTokens>(Error.Create(ErrorCode.InvalidRefreshToken));
 
         // Get user
         User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
         if (user is null)
-            return Result.Failure<AuthTokens>(Error.Unauthorized("Auth.UserNotFound", "User not found."));
+            return Result.Failure<AuthTokens>(Error.Create(ErrorCode.UserNotFound));
 
         // Revoke old refresh token
         refreshToken.Revoke();
