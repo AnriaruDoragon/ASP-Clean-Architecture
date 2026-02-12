@@ -6,4 +6,4 @@ namespace Application.Features.Auth.Commands.Register;
 /// Command to register a new user.
 /// </summary>
 public sealed record RegisterCommand(string Email, string Password, string? DeviceName = null, string? UserAgent = null)
-    : ICommand<AuthTokens>;
+    : ICommand<AuthTokensResponse>;

@@ -1,9 +1,9 @@
 namespace Application.Features.Products;
 
 /// <summary>
-/// Data transfer object for Product.
+/// Response model for Product.
 /// </summary>
-public sealed record ProductDto(
+public sealed record ProductResponse(
     Guid Id,
     string Name,
     string? Description,

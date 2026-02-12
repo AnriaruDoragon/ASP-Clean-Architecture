@@ -10,15 +10,18 @@ public sealed class RefreshTokenCommandHandler(
     IApplicationDbContext context,
     IJwtService jwtService,
     IDateTimeProvider dateTimeProvider
-) : ICommandHandler<RefreshTokenCommand, AuthTokens>
+) : ICommandHandler<RefreshTokenCommand, AuthTokensResponse>
 {
-    public async Task<Result<AuthTokens>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthTokensResponse>> Handle(
+        RefreshTokenCommand request,
+        CancellationToken cancellationToken
+    )
     {
         // Get user ID from expired access token
         Guid? userId = jwtService.GetUserIdFromToken(request.AccessToken);
 
         if (userId is null)
-            return Result.Failure<AuthTokens>(Error.Create(ErrorCode.InvalidToken));
+            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.InvalidToken));
 
         // Find the refresh token
         Domain.Entities.RefreshToken? refreshToken = await context.RefreshTokens.FirstOrDefaultAsync(
@@ -27,13 +30,13 @@ public sealed class RefreshTokenCommandHandler(
         );
 
         if (refreshToken is null || !refreshToken.IsValid)
-            return Result.Failure<AuthTokens>(Error.Create(ErrorCode.InvalidRefreshToken));
+            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.InvalidRefreshToken));
 
         // Get user
         User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
         if (user is null)
-            return Result.Failure<AuthTokens>(Error.Create(ErrorCode.UserNotFound));
+            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.UserNotFound));
 
         // Revoke old refresh token
         refreshToken.Revoke();
@@ -54,6 +57,6 @@ public sealed class RefreshTokenCommandHandler(
         // Generate new access token
         string accessToken = jwtService.GenerateAccessToken(user);
 
-        return new AuthTokens(accessToken, newRefreshTokenValue, dateTimeProvider.UtcNow.AddMinutes(15));
+        return new AuthTokensResponse(accessToken, newRefreshTokenValue, dateTimeProvider.UtcNow.AddMinutes(15));
     }
 }

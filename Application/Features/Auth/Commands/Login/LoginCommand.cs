@@ -6,4 +6,4 @@ namespace Application.Features.Auth.Commands.Login;
 /// Command to authenticate a user.
 /// </summary>
 public sealed record LoginCommand(string Email, string Password, string? DeviceName = null, string? UserAgent = null)
-    : ICommand<AuthTokens>;
+    : ICommand<AuthTokensResponse>;

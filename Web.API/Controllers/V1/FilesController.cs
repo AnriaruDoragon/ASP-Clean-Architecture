@@ -21,6 +21,7 @@ public class FilesController(ISender sender) : ControllerBase
     /// Uploads a file (image or video).
     /// </summary>
     [HttpPost("upload")]
+    [EndpointSummary("Upload file")]
     [ProducesResponseType<UploadFileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]

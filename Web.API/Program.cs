@@ -1,10 +1,8 @@
-using System.Reflection;
 using Application;
 using Application.Common.Interfaces;
 using Common.ApiVersioning.Extensions;
 using Common.ApiVersioning.Middlewares;
 using DotNetEnv;
-using FluentValidation;
 using Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Serilog;
@@ -45,7 +43,6 @@ builder
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 builder.Services.AddControllers();
-builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 builder.Services.AddApiVersioningServices(builder.Configuration);
 
 WebApplication app = builder.Build();

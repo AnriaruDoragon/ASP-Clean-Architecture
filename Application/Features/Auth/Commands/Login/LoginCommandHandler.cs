@@ -11,20 +11,20 @@ public sealed class LoginCommandHandler(
     IPasswordHasher passwordHasher,
     IJwtService jwtService,
     IDateTimeProvider dateTimeProvider
-) : ICommandHandler<LoginCommand, AuthTokens>
+) : ICommandHandler<LoginCommand, AuthTokensResponse>
 {
-    public async Task<Result<AuthTokens>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthTokensResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         // Find user by email
         string normalizedEmail = request.Email.ToLowerInvariant();
         User? user = await context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
 
         if (user is null)
-            return Result.Failure<AuthTokens>(Error.Create(ErrorCode.InvalidCredentials));
+            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.InvalidCredentials));
 
         // Verify password
         if (!passwordHasher.Verify(request.Password, user.PasswordHash))
-            return Result.Failure<AuthTokens>(Error.Create(ErrorCode.InvalidCredentials));
+            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.InvalidCredentials));
 
         // Create refresh token
         string refreshTokenValue = jwtService.GenerateRefreshToken();
@@ -42,6 +42,6 @@ public sealed class LoginCommandHandler(
         // Generate access token
         string accessToken = jwtService.GenerateAccessToken(user);
 
-        return new AuthTokens(accessToken, refreshTokenValue, dateTimeProvider.UtcNow.AddMinutes(15));
+        return new AuthTokensResponse(accessToken, refreshTokenValue, dateTimeProvider.UtcNow.AddMinutes(15));
     }
 }

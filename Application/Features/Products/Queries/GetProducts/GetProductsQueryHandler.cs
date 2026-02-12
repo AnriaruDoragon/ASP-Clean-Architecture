@@ -10,9 +10,9 @@ namespace Application.Features.Products.Queries.GetProducts;
 /// Handler for GetProductsQuery.
 /// </summary>
 public sealed class GetProductsQueryHandler(IApplicationDbContext context)
-    : IQueryHandler<GetProductsQuery, PagedList<ProductDto>>
+    : IQueryHandler<GetProductsQuery, PagedList<ProductResponse>>
 {
-    public async Task<Result<PagedList<ProductDto>>> Handle(
+    public async Task<Result<PagedList<ProductResponse>>> Handle(
         GetProductsQuery request,
         CancellationToken cancellationToken
     )
@@ -30,13 +30,21 @@ public sealed class GetProductsQueryHandler(IApplicationDbContext context)
         int totalCount = await query.CountAsync(cancellationToken);
 
         // Apply pagination and project to DTO
-        List<ProductDto> items = await query
+        List<ProductResponse> items = await query
             .OrderBy(p => p.Name)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(p => new ProductDto(p.Id, p.Name, p.Description, p.Price, p.StockQuantity, p.IsActive, p.CreatedAt))
+            .Select(p => new ProductResponse(
+                p.Id,
+                p.Name,
+                p.Description,
+                p.Price,
+                p.StockQuantity,
+                p.IsActive,
+                p.CreatedAt
+            ))
             .ToListAsync(cancellationToken);
 
-        return new PagedList<ProductDto>(items, totalCount, request.PageNumber, request.PageSize);
+        return new PagedList<ProductResponse>(items, totalCount, request.PageNumber, request.PageSize);
     }
 }

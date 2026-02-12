@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Application.Features.Auth.Queries.GetSessions;
 
 public sealed class GetSessionsQueryHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
-    : IQueryHandler<GetSessionsQuery, IReadOnlyList<SessionDto>>
+    : IQueryHandler<GetSessionsQuery, IReadOnlyList<Session>>
 {
-    public async Task<Result<IReadOnlyList<SessionDto>>> Handle(
+    public async Task<Result<IReadOnlyList<Session>>> Handle(
         GetSessionsQuery request,
         CancellationToken cancellationToken
     )
@@ -17,13 +17,13 @@ public sealed class GetSessionsQueryHandler(IApplicationDbContext context, ICurr
 
         if (userId is null)
         {
-            return Result.Failure<IReadOnlyList<SessionDto>>(Error.Create(ErrorCode.NotAuthenticated));
+            return Result.Failure<IReadOnlyList<Session>>(Error.Create(ErrorCode.NotAuthenticated));
         }
 
-        List<SessionDto> sessions = await context
+        List<Session> sessions = await context
             .RefreshTokens.Where(rt => rt.UserId == userId && !rt.IsRevoked && rt.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(rt => rt.CreatedAt)
-            .Select(rt => new SessionDto(
+            .Select(rt => new Session(
                 rt.Id,
                 rt.DeviceName,
                 rt.UserAgent,
