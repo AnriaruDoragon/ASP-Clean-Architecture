@@ -13,7 +13,7 @@ public sealed class LogoutCommandHandler(IApplicationDbContext context, ICurrent
         Guid? userId = currentUserService.UserId;
 
         if (userId is null)
-            return Result.Failure(Error.Unauthorized("Auth.NotAuthenticated", "User is not authenticated."));
+            return Result.Failure(Error.Create(ErrorCode.NotAuthenticated));
 
         if (request.RefreshToken is not null)
         {

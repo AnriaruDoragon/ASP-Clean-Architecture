@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Web.API.Extensions;
+using Web.API.Models;
 
 namespace Web.API.Controllers.V1;
 
@@ -20,9 +21,10 @@ public class FilesController(ISender sender) : ControllerBase
     /// Uploads a file (image or video).
     /// </summary>
     [HttpPost("upload")]
+    [EndpointSummary("Upload file")]
     [ProducesResponseType<UploadFileResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Upload(IFormFile file, CancellationToken cancellationToken)
     {
         var command = new UploadFileCommand(file);

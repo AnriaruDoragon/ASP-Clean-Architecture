@@ -9,6 +9,7 @@ using Application.Features.Auth.Commands.ResetPassword;
 using Application.Features.Auth.Commands.RevokeSession;
 using Application.Features.Auth.Commands.SendVerificationEmail;
 using Application.Features.Auth.Commands.VerifyEmail;
+using Application.Features.Auth.Queries.GetCurrentUser;
 using Application.Features.Auth.Queries.GetSessions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Web.API.Authorization;
 using Web.API.Extensions;
+using Web.API.Models;
 
 namespace Web.API.Controllers.V1;
 
@@ -29,10 +31,11 @@ public class AuthController(ISender sender) : ControllerBase
     /// </summary>
     [Public]
     [HttpPost("[action]")]
+    [EndpointSummary("Register")]
     [RateLimit("Auth")]
-    [ProducesResponseType<AuthTokens>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<AuthTokensResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
         var command = new RegisterCommand(
@@ -42,7 +45,7 @@ public class AuthController(ISender sender) : ControllerBase
             Request.Headers.UserAgent
         );
 
-        Result<AuthTokens> result = await sender.Send(command, cancellationToken);
+        Result<AuthTokensResponse> result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
     }
@@ -52,15 +55,16 @@ public class AuthController(ISender sender) : ControllerBase
     /// </summary>
     [Public]
     [HttpPost("[action]")]
+    [EndpointSummary("Login")]
     [RateLimit("Auth")]
-    [ProducesResponseType<AuthTokens>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<AuthTokensResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         var command = new LoginCommand(request.Email, request.Password, request.DeviceName, Request.Headers.UserAgent);
 
-        Result<AuthTokens> result = await sender.Send(command, cancellationToken);
+        Result<AuthTokensResponse> result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
     }
@@ -70,12 +74,14 @@ public class AuthController(ISender sender) : ControllerBase
     /// </summary>
     [Public]
     [HttpPost("[action]")]
-    [ProducesResponseType<AuthTokens>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Refresh(RefreshTokenCommand command, CancellationToken cancellationToken)
+    [EndpointSummary("Refresh token")]
+    [ProducesResponseType<AuthTokensResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Refresh(RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        Result<AuthTokens> result = await sender.Send(command, cancellationToken);
+        var command = new RefreshTokenCommand(request.AccessToken, request.RefreshToken);
+        Result<AuthTokensResponse> result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
     }
@@ -85,11 +91,27 @@ public class AuthController(ISender sender) : ControllerBase
     /// If refreshToken is not provided, revokes all sessions.
     /// </summary>
     [HttpPost("[action]")]
+    [EndpointSummary("Logout")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Logout(LogoutCommand? command, CancellationToken cancellationToken)
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Logout(LogoutRequest? request, CancellationToken cancellationToken)
     {
-        Result result = await sender.Send(command ?? new LogoutCommand(), cancellationToken);
+        var command = new LogoutCommand(request?.RefreshToken);
+        Result result = await sender.Send(command, cancellationToken);
+
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Get the current authenticated user's profile.
+    /// </summary>
+    [HttpGet("[action]")]
+    [EndpointSummary("Get Current User")]
+    [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Me(CancellationToken cancellationToken = default)
+    {
+        Result<CurrentUserResponse> result = await sender.Send(new GetCurrentUserQuery(), cancellationToken);
 
         return result.ToActionResult();
     }
@@ -98,14 +120,15 @@ public class AuthController(ISender sender) : ControllerBase
     /// Get all active sessions for the current user.
     /// </summary>
     [HttpGet("Sessions")]
-    [ProducesResponseType<IReadOnlyList<SessionDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [EndpointSummary("List sessions")]
+    [ProducesResponseType<IReadOnlyList<Session>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetSessions(
         [FromQuery] GetSessionsQuery query,
         CancellationToken cancellationToken
     )
     {
-        Result<IReadOnlyList<SessionDto>> result = await sender.Send(query, cancellationToken);
+        Result<IReadOnlyList<Session>> result = await sender.Send(query, cancellationToken);
 
         return result.ToActionResult();
     }
@@ -114,9 +137,10 @@ public class AuthController(ISender sender) : ControllerBase
     /// Revoke a specific session.
     /// </summary>
     [HttpDelete("Sessions/{sessionId:guid}")]
+    [EndpointSummary("Revoke session")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RevokeSession(Guid sessionId, CancellationToken cancellationToken)
     {
         var command = new RevokeSessionCommand(sessionId);
@@ -129,10 +153,11 @@ public class AuthController(ISender sender) : ControllerBase
     /// Initiates password reset process.
     /// </summary>
     [HttpPost("[action]")]
+    [EndpointSummary("Forgot password")]
     [Public]
     [RateLimit("Auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
         var command = new ForgotPasswordCommand(request.Email);
@@ -145,10 +170,11 @@ public class AuthController(ISender sender) : ControllerBase
     /// Resets password using a valid token.
     /// </summary>
     [HttpPost("[action]")]
+    [EndpointSummary("Reset password")]
     [Public]
     [RateLimit("Auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
     {
         var command = new ResetPasswordCommand(request.Email, request.Token, request.NewPassword);
@@ -161,11 +187,12 @@ public class AuthController(ISender sender) : ControllerBase
     /// Sends email verification link to the current user.
     /// </summary>
     [HttpPost("[action]")]
+    [EndpointSummary("Send verification email")]
     [Authorize]
     [RateLimit("Strict", Per.User)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SendVerificationEmail(CancellationToken cancellationToken)
     {
         string? userId = User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value;
@@ -185,10 +212,11 @@ public class AuthController(ISender sender) : ControllerBase
     /// Verifies email using a token.
     /// </summary>
     [HttpPost("[action]")]
+    [EndpointSummary("Verify email")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> VerifyEmail(VerifyEmailRequest request, CancellationToken cancellationToken)
     {
         string? userId = User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value;
@@ -235,3 +263,13 @@ public sealed record ResetPasswordRequest(string Email, string Token, string New
 /// Request to verify email with token.
 /// </summary>
 public sealed record VerifyEmailRequest(string Token);
+
+/// <summary>
+/// Request to refresh authentication tokens.
+/// </summary>
+public sealed record RefreshTokenRequest(string AccessToken, string RefreshToken);
+
+/// <summary>
+/// Request to logout.
+/// </summary>
+public sealed record LogoutRequest(string? RefreshToken = null);

@@ -1,10 +1,10 @@
-using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Application;
 using Application.Common.Interfaces;
 using Common.ApiVersioning.Extensions;
 using Common.ApiVersioning.Middlewares;
 using DotNetEnv;
-using FluentValidation;
 using Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Serilog;
@@ -44,8 +44,11 @@ builder
     .Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
-builder.Services.AddControllers();
-builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase))
+    );
 builder.Services.AddApiVersioningServices(builder.Configuration);
 
 WebApplication app = builder.Build();

@@ -25,7 +25,7 @@ public sealed class VerifyEmailCommandHandler(IApplicationDbContext context)
 
         if (user.EmailVerified)
         {
-            return Result.Failure(Error.Validation("Email is already verified."));
+            return Result.Failure(Error.Create(ErrorCode.EmailAlreadyVerified));
         }
 
         EmailVerificationToken? verificationToken = await context.EmailVerificationTokens.FirstOrDefaultAsync(
@@ -35,7 +35,7 @@ public sealed class VerifyEmailCommandHandler(IApplicationDbContext context)
 
         if (verificationToken is null || !verificationToken.IsValid())
         {
-            return Result.Failure(Error.Validation("Invalid or expired verification token."));
+            return Result.Failure(Error.Create(ErrorCode.InvalidVerificationToken));
         }
 
         // Verify email

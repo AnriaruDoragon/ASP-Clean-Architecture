@@ -11,4 +11,4 @@ public sealed record GetProductsQuery(
     int PageSize = 10,
     bool? IsActive = null,
     string? SearchTerm = null
-) : IQuery<PagedList<ProductDto>>;
+) : IQuery<PagedList<ProductResponse>>;
