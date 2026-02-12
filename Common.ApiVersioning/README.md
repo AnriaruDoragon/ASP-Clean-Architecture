@@ -14,6 +14,7 @@ compliance.
 - **Sunset Enforcement** - Automatically returns HTTP 410 Gone for end-of-life versions
 - **Flexible Configuration** - JSON-based configuration with validation
 - **FluentValidation Integration** - Automatically extracts validation rules into OpenAPI schemas
+- **Enum String Serialization** - Converts enum schemas to camelCase strings matching `JsonStringEnumConverter` behavior
 - **Multiple Document Groups** - Support for admin/public API separation
 
 ## Installation
@@ -312,6 +313,16 @@ public async Task<IActionResult> GetProducts(
 | `EmailAddress()`           | `format: "email"`                      |
 | `Matches("^[a-z]+$")`      | `pattern: "^[a-z]+$"`                  |
 
+### Enum Schema Transformer
+
+When `JsonStringEnumConverter` is configured globally, enums serialize as camelCase strings at runtime — but the default OpenAPI schema still describes them as integers. The `EnumSchemaTransformer` fixes this by:
+
+- Changing the schema `type` from `integer` to `string`
+- Listing all enum values as camelCase strings (e.g., `["user", "admin"]`)
+- Preserving nullable enum support
+
+This runs automatically when registered via `AddApiVersioningServices()`.
+
 ### Numeric Type Fix
 
 .NET 10's OpenAPI generator sets multi-type flags on numeric properties (e.g., `Integer | String`) due to JSON Schema 2020-12 semantics. Since OpenAPI 3.0 only supports a single `type` value, the serializer drops the field entirely — causing Scalar UI to display numeric fields as strings.
@@ -418,7 +429,7 @@ YourSolution.sln
 │   │   ├── Enums/
 │   │   ├── Extensions/
 │   │   ├── Middlewares/
-│   │   └── OpenApi/                    # Schema/operation transformers
+│   │   └── OpenApi/                    # Schema/operation transformers (enum, numeric, FluentValidation)
 │   └── Web.API/                        # References Common.ApiVersioning
 │       └── Program.cs
 ```

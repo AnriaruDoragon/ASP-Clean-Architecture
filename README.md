@@ -428,14 +428,15 @@ All endpoints require authentication by default. Use attributes to customize:
 
 ### Auth Endpoints
 
-| Endpoint              | Method | Description             |
-|-----------------------|--------|-------------------------|
-| `/Auth/Register`      | POST   | Register new user       |
-| `/Auth/Login`         | POST   | Login, returns tokens   |
-| `/Auth/Refresh`       | POST   | Refresh access token    |
-| `/Auth/Logout`        | POST   | Revoke refresh token(s) |
-| `/Auth/Sessions`      | GET    | List active sessions    |
-| `/Auth/Sessions/{id}` | DELETE | Revoke specific session |
+| Endpoint              | Method | Description              |
+|-----------------------|--------|--------------------------|
+| `/Auth/Register`      | POST   | Register new user        |
+| `/Auth/Login`         | POST   | Login, returns tokens    |
+| `/Auth/Refresh`       | POST   | Refresh access token     |
+| `/Auth/Logout`        | POST   | Revoke refresh token(s)  |
+| `/Auth/Me`            | GET    | Get current user profile |
+| `/Auth/Sessions`      | GET    | List active sessions     |
+| `/Auth/Sessions/{id}` | DELETE | Revoke specific session  |
 
 ### Multi-Device Support
 
@@ -623,7 +624,7 @@ Optional response caching with Memory or Redis backends.
 **Usage in queries:**
 ```csharp
 public sealed record GetProductByIdQuery(Guid Id)
-    : IQuery<ProductDto>, ICacheableQuery
+    : IQuery<ProductResponse>, ICacheableQuery
 {
     public string CacheKey => $"products:{Id}";
 }
