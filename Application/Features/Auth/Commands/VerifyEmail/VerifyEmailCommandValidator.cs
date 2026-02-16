@@ -6,8 +6,6 @@ public sealed class VerifyEmailCommandValidator : AbstractValidator<VerifyEmailC
 {
     public VerifyEmailCommandValidator()
     {
-        RuleFor(x => x.UserId).NotEmpty().WithMessage("User ID is required.");
-
         RuleFor(x => x.Token).NotEmpty().WithMessage("Verification token is required.");
     }
 }

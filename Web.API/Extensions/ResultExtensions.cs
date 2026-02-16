@@ -32,36 +32,46 @@ public static class ResultExtensions
 
     private static ObjectResult ToProblemDetails(Error error)
     {
+        _ = Enum.TryParse(error.Code, out ErrorCode errorCode);
+
         var problemDetails = new ErrorProblemDetails
         {
             Type = GetTypeUri(error.StatusCode),
             Title = GetTitle(error.StatusCode),
             Status = error.StatusCode,
             Detail = error.Description,
-            ErrorCode = error.Code,
+            ErrorCode = errorCode,
         };
 
-        // Add field-level validation errors when available
+        // ValidationError from FluentValidation — multiple fields, no per-field codes
         if (error is ValidationError validationError)
         {
-            problemDetails.ErrorCode =
-                validationError.Errors.SelectMany(kvp => kvp.Value).Select(e => e.Code).FirstOrDefault()
-                ?? "ValidationError";
-
             problemDetails.Errors = validationError.Errors.ToDictionary(
                 kvp => kvp.Key,
                 kvp => kvp.Value.Select(e => new FieldErrorDetail { Code = e.Code, Detail = e.Message }).ToArray()
             );
         }
+        // Error.From() with a field — single field with code
+        else if (error.Field is not null)
+        {
+            problemDetails.Errors = new Dictionary<string, FieldErrorDetail[]>
+            {
+                [error.Field] = [new FieldErrorDetail { Code = error.Code, Detail = error.Description }],
+            };
+        }
 
         // Copy any custom extensions from the Error to ProblemDetails
-        if (error.Extensions is { Count: > 0 })
+        if (error.Extensions is not { Count: > 0 })
         {
-            foreach ((string key, object? value) in error.Extensions)
+            return new ObjectResult(problemDetails)
             {
-                problemDetails.Extensions[key] = value;
-            }
+                StatusCode = error.StatusCode,
+                ContentTypes = { "application/problem+json" },
+            };
         }
+
+        foreach ((string key, object? value) in error.Extensions)
+            problemDetails.Extensions[key] = value;
 
         return new ObjectResult(problemDetails)
         {

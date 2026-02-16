@@ -10,10 +10,7 @@ public sealed class LogoutCommandHandler(IApplicationDbContext context, ICurrent
 {
     public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
-        Guid? userId = currentUserService.UserId;
-
-        if (userId is null)
-            return Result.Failure(Error.Create(ErrorCode.NotAuthenticated));
+        Guid userId = currentUserService.UserId;
 
         if (request.RefreshToken is not null)
         {
@@ -24,9 +21,7 @@ public sealed class LogoutCommandHandler(IApplicationDbContext context, ICurrent
             );
 
             if (refreshToken is not null && !refreshToken.IsRevoked)
-            {
                 refreshToken.Revoke();
-            }
         }
         else
         {
@@ -36,9 +31,7 @@ public sealed class LogoutCommandHandler(IApplicationDbContext context, ICurrent
                 .ToListAsync(cancellationToken);
 
             foreach (Domain.Entities.RefreshToken token in activeTokens)
-            {
                 token.Revoke();
-            }
         }
 
         await context.SaveChangesAsync(cancellationToken);

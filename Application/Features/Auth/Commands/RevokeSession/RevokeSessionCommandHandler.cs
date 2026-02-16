@@ -10,10 +10,7 @@ public sealed class RevokeSessionCommandHandler(IApplicationDbContext context, I
 {
     public async Task<Result> Handle(RevokeSessionCommand request, CancellationToken cancellationToken)
     {
-        Guid? userId = currentUserService.UserId;
-
-        if (userId is null)
-            return Result.Failure(Error.Create(ErrorCode.NotAuthenticated));
+        Guid userId = currentUserService.UserId;
 
         Domain.Entities.RefreshToken? session = await context.RefreshTokens.FirstOrDefaultAsync(
             rt => rt.Id == request.SessionId && rt.UserId == userId,
@@ -23,11 +20,11 @@ public sealed class RevokeSessionCommandHandler(IApplicationDbContext context, I
         if (session is null)
             return Result.Failure(Error.NotFound("Session", request.SessionId));
 
-        if (!session.IsRevoked)
-        {
-            session.Revoke();
-            await context.SaveChangesAsync(cancellationToken);
-        }
+        if (session.IsRevoked)
+            return Result.Success();
+
+        session.Revoke();
+        await context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }

@@ -13,12 +13,7 @@ public sealed class GetCurrentUserQueryHandler(IApplicationDbContext context, IC
         CancellationToken cancellationToken
     )
     {
-        Guid? userId = currentUserService.UserId;
-
-        if (userId is null)
-        {
-            return Result.Failure<CurrentUserResponse>(Error.Create(ErrorCode.NotAuthenticated));
-        }
+        Guid userId = currentUserService.UserId;
 
         CurrentUserResponse? user = await context
             .Users.Where(u => u.Id == userId)

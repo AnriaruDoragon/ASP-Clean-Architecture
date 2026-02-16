@@ -13,12 +13,7 @@ public sealed class GetSessionsQueryHandler(IApplicationDbContext context, ICurr
         CancellationToken cancellationToken
     )
     {
-        Guid? userId = currentUserService.UserId;
-
-        if (userId is null)
-        {
-            return Result.Failure<IReadOnlyList<Session>>(Error.Create(ErrorCode.NotAuthenticated));
-        }
+        Guid userId = currentUserService.UserId;
 
         List<Session> sessions = await context
             .RefreshTokens.Where(rt => rt.UserId == userId && !rt.IsRevoked && rt.ExpiresAt > DateTime.UtcNow)

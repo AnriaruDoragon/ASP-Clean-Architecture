@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Application.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Web.API.Models;
@@ -10,7 +11,7 @@ namespace Web.API.Models;
 public sealed class ErrorProblemDetails : ProblemDetails
 {
     [JsonPropertyName("errorCode")]
-    public string ErrorCode { get; set; } = null!;
+    public ErrorCode ErrorCode { get; set; }
 
     [JsonPropertyName("errors")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -23,7 +24,8 @@ public sealed class ErrorProblemDetails : ProblemDetails
 public sealed class FieldErrorDetail
 {
     [JsonPropertyName("code")]
-    public string Code { get; set; } = null!;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Code { get; set; }
 
     [JsonPropertyName("detail")]
     public string Detail { get; set; } = null!;

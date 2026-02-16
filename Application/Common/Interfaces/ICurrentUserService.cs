@@ -8,9 +8,9 @@ public interface ICurrentUserService
 {
     /// <summary>
     /// Gets the current user's internal identifier.
-    /// Returns null if no user is authenticated.
+    /// Throws if no user is authenticated — only use from authenticated endpoints.
     /// </summary>
-    public Guid? UserId { get; }
+    public Guid UserId { get; }
 
     /// <summary>
     /// Gets whether a user is currently authenticated.

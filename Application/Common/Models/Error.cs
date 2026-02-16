@@ -12,6 +12,11 @@ public record Error(string Code, string Description, int StatusCode = 500)
     public IDictionary<string, object?>? Extensions { get; init; }
 
     /// <summary>
+    /// Optional field name for field-level error reporting in ProblemDetails.
+    /// </summary>
+    public string? Field { get; init; }
+
+    /// <summary>
     /// Represents no error (success state).
     /// </summary>
     public static readonly Error None = new(string.Empty, string.Empty, 200);
@@ -22,10 +27,10 @@ public record Error(string Code, string Description, int StatusCode = 500)
     public static readonly Error NullValue = new("NullValue", "A null value was provided.", 400);
 
     /// <summary>
-    /// Creates an error from an <see cref="ErrorCode"/> enum value, using defaults from <see cref="ErrorInfoAttribute"/>.
+    /// Creates an error from an <see cref="ErrorCode"/> enum value, with an optional field and message override.
     /// </summary>
-    public static Error Create(ErrorCode code, string? message = null) =>
-        new(code.ToString(), message ?? code.GetDefaultMessage(), code.GetStatusCode());
+    public static Error From(ErrorCode code, string? field = null, string? message = null) =>
+        new(code.ToString(), message ?? code.GetDefaultMessage(), code.GetStatusCode()) { Field = field };
 
     /// <summary>
     /// Creates a not found error for a specific entity by ID.
@@ -39,35 +44,10 @@ public record Error(string Code, string Description, int StatusCode = 500)
     public static Error NotFound(string description) => new("NotFound", description, 404);
 
     /// <summary>
-    /// Creates a generic validation error. Prefer <see cref="ValidationError.ForField"/> for field-specific errors.
-    /// </summary>
-    public static Error Validation(string description) => new("ValidationError", description, 400);
-
-    /// <summary>
-    /// Creates a generic conflict error.
-    /// </summary>
-    public static Error Conflict(string description) => new("Conflict", description, 409);
-
-    /// <summary>
-    /// Creates a conflict error with a custom code.
-    /// </summary>
-    public static Error Conflict(string code, string description) => new(code, description, 409);
-
-    /// <summary>
     /// Creates an unauthorized error.
     /// </summary>
     public static Error Unauthorized(string description = "You are not authorized to perform this action.") =>
         new("Unauthorized", description, 401);
-
-    /// <summary>
-    /// Creates an unauthorized error with a custom code.
-    /// </summary>
-    public static Error Unauthorized(string code, string description) => new(code, description, 401);
-
-    /// <summary>
-    /// Creates a bad request error with a custom code.
-    /// </summary>
-    public static Error BadRequest(string code, string description) => new(code, description, 400);
 
     /// <summary>
     /// Creates a forbidden error.

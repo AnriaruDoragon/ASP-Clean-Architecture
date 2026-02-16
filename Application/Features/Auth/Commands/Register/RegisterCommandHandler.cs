@@ -20,7 +20,7 @@ public sealed class RegisterCommandHandler(
         bool emailExists = await context.Users.AnyAsync(u => u.Email == normalizedEmail, cancellationToken);
 
         if (emailExists)
-            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.EmailTaken));
+            return Result.Failure<AuthTokensResponse>(Error.From(ErrorCode.EmailTaken, "email"));
 
         // Create user
         string passwordHash = passwordHasher.Hash(request.Password);
