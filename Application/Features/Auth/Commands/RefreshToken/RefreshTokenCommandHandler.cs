@@ -21,7 +21,7 @@ public sealed class RefreshTokenCommandHandler(
         Guid? userId = jwtService.GetUserIdFromToken(request.AccessToken);
 
         if (userId is null)
-            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.InvalidToken));
+            return Result.Failure<AuthTokensResponse>(Error.From(ErrorCode.InvalidToken));
 
         // Find the refresh token
         Domain.Entities.RefreshToken? refreshToken = await context.RefreshTokens.FirstOrDefaultAsync(
@@ -30,13 +30,13 @@ public sealed class RefreshTokenCommandHandler(
         );
 
         if (refreshToken is null || !refreshToken.IsValid)
-            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.InvalidRefreshToken));
+            return Result.Failure<AuthTokensResponse>(Error.From(ErrorCode.InvalidRefreshToken));
 
         // Get user
         User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
         if (user is null)
-            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.UserNotFound));
+            return Result.Failure<AuthTokensResponse>(Error.From(ErrorCode.UserNotFound));
 
         // Revoke old refresh token
         refreshToken.Revoke();

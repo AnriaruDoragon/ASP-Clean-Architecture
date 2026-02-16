@@ -28,6 +28,7 @@ public class FilesController(ISender sender) : ControllerBase
     public async Task<IActionResult> Upload(IFormFile file, CancellationToken cancellationToken)
     {
         var command = new UploadFileCommand(file);
+
         Result<UploadFileResponse> result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();

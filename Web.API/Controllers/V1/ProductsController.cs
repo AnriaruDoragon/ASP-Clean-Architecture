@@ -50,6 +50,7 @@ public class ProductsController(ISender sender) : ControllerBase
     public async Task<IActionResult> GetProduct(Guid id, CancellationToken cancellationToken = default)
     {
         var query = new GetProductByIdQuery(id);
+
         Result<ProductResponse> result = await sender.Send(query, cancellationToken);
 
         return result.ToActionResult();
@@ -69,6 +70,7 @@ public class ProductsController(ISender sender) : ControllerBase
     )
     {
         var command = new CreateProductCommand(request.Name, request.Description, request.Price, request.StockQuantity);
+
         Result<Guid> result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult(id =>
@@ -109,6 +111,7 @@ public class ProductsController(ISender sender) : ControllerBase
     public async Task<IActionResult> DeleteProduct(Guid id, CancellationToken cancellationToken = default)
     {
         var command = new DeleteProductCommand(id);
+
         Result result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();

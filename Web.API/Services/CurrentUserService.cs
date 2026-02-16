@@ -10,21 +10,23 @@ namespace Web.API.Services;
 /// </summary>
 public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {
-    public Guid? UserId
-    {
-        get
-        {
-            ClaimsPrincipal? user = httpContextAccessor.HttpContext?.User;
-            if (user is null)
-                return null;
-
-            // Try standard claim types (JWT uses "sub", ASP.NET uses NameIdentifier)
-            string? claim =
-                user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue(JwtRegisteredClaimNames.Sub);
-
-            return Guid.TryParse(claim, out Guid id) ? id : null;
-        }
-    }
+    public Guid UserId =>
+        TryGetUserId()
+        ?? throw new InvalidOperationException(
+            "No authenticated user. This service must only be used from authenticated endpoints."
+        );
 
     public bool IsAuthenticated => httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false;
+
+    private Guid? TryGetUserId()
+    {
+        ClaimsPrincipal? user = httpContextAccessor.HttpContext?.User;
+        if (user is null)
+            return null;
+
+        string? claim =
+            user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+        return Guid.TryParse(claim, out Guid id) ? id : null;
+    }
 }

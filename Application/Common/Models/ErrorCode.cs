@@ -9,18 +9,15 @@ namespace Application.Common.Models;
 /// </summary>
 public enum ErrorCode
 {
-    // Authentication errors (400)
+    // Validation errors (400)
     [ErrorInfo(400, "Invalid email or password.")]
     InvalidCredentials,
 
-    [ErrorInfo(400, "Invalid or expired token.")]
-    InvalidResetToken,
+    [ErrorInfo(400, "Invalid or expired password reset token.")]
+    InvalidPasswordResetToken,
 
-    [ErrorInfo(400, "Email is already verified.")]
-    EmailAlreadyVerified,
-
-    [ErrorInfo(400, "Invalid or expired verification token.")]
-    InvalidVerificationToken,
+    [ErrorInfo(400, "Invalid or expired email verification token.")]
+    InvalidEmailVerificationToken,
 
     // Authentication errors (401)
     [ErrorInfo(401, "Authentication is required.")]
@@ -35,9 +32,29 @@ public enum ErrorCode
     [ErrorInfo(401, "User not found.")]
     UserNotFound,
 
+    /// <summary>
+    /// Used by the FluentValidation pipeline. Always includes an <c>errors</c> dictionary in the response.
+    /// Do not use directly in command handlers — use a specific error code instead.
+    /// </summary>
+    [ErrorInfo(400, "One or more validation errors occurred.")]
+    ValidationFailed,
+
+    // Generic errors
+    [ErrorInfo(404, "The requested resource was not found.")]
+    NotFound,
+
+    [ErrorInfo(401, "You are not authorized to perform this action.")]
+    Unauthorized,
+
+    [ErrorInfo(403, "You do not have permission to access this resource.")]
+    Forbidden,
+
     // Conflict errors (409)
     [ErrorInfo(409, "Email is already registered.")]
     EmailTaken,
+
+    [ErrorInfo(409, "Email is already verified.")]
+    EmailAlreadyVerified,
 }
 
 /// <summary>

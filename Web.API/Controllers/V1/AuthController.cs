@@ -12,7 +12,6 @@ using Application.Features.Auth.Commands.VerifyEmail;
 using Application.Features.Auth.Queries.GetCurrentUser;
 using Application.Features.Auth.Queries.GetSessions;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Web.API.Authorization;
@@ -81,6 +80,7 @@ public class AuthController(ISender sender) : ControllerBase
     public async Task<IActionResult> Refresh(RefreshTokenRequest request, CancellationToken cancellationToken)
     {
         var command = new RefreshTokenCommand(request.AccessToken, request.RefreshToken);
+
         Result<AuthTokensResponse> result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
@@ -97,6 +97,7 @@ public class AuthController(ISender sender) : ControllerBase
     public async Task<IActionResult> Logout(LogoutRequest? request, CancellationToken cancellationToken)
     {
         var command = new LogoutCommand(request?.RefreshToken);
+
         Result result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
@@ -144,6 +145,7 @@ public class AuthController(ISender sender) : ControllerBase
     public async Task<IActionResult> RevokeSession(Guid sessionId, CancellationToken cancellationToken)
     {
         var command = new RevokeSessionCommand(sessionId);
+
         Result result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
@@ -161,6 +163,7 @@ public class AuthController(ISender sender) : ControllerBase
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
         var command = new ForgotPasswordCommand(request.Email);
+
         Result result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
@@ -177,7 +180,8 @@ public class AuthController(ISender sender) : ControllerBase
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
     {
-        var command = new ResetPasswordCommand(request.Email, request.Token, request.NewPassword);
+        var command = new ResetPasswordCommand(request.Token, request.NewPassword);
+
         Result result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
@@ -188,22 +192,13 @@ public class AuthController(ISender sender) : ControllerBase
     /// </summary>
     [HttpPost("[action]")]
     [EndpointSummary("Send verification email")]
-    [Authorize]
     [RateLimit("Strict", Per.User)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SendVerificationEmail(CancellationToken cancellationToken)
     {
-        string? userId = User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value;
-
-        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out Guid userGuid))
-        {
-            return Unauthorized();
-        }
-
-        var command = new SendVerificationEmailCommand(userGuid);
-        Result result = await sender.Send(command, cancellationToken);
+        Result result = await sender.Send(new SendVerificationEmailCommand(), cancellationToken);
 
         return result.ToActionResult();
     }
@@ -213,20 +208,13 @@ public class AuthController(ISender sender) : ControllerBase
     /// </summary>
     [HttpPost("[action]")]
     [EndpointSummary("Verify email")]
-    [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> VerifyEmail(VerifyEmailRequest request, CancellationToken cancellationToken)
     {
-        string? userId = User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value;
+        var command = new VerifyEmailCommand(request.Token);
 
-        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out Guid userGuid))
-        {
-            return Unauthorized();
-        }
-
-        var command = new VerifyEmailCommand(userGuid, request.Token);
         Result result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult();
@@ -257,7 +245,7 @@ public sealed record ForgotPasswordRequest(string Email);
 /// <summary>
 /// Request to reset password with token.
 /// </summary>
-public sealed record ResetPasswordRequest(string Email, string Token, string NewPassword);
+public sealed record ResetPasswordRequest(string Token, string NewPassword);
 
 /// <summary>
 /// Request to verify email with token.

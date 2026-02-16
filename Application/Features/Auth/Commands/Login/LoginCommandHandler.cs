@@ -20,11 +20,11 @@ public sealed class LoginCommandHandler(
         User? user = await context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
 
         if (user is null)
-            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.InvalidCredentials));
+            return Result.Failure<AuthTokensResponse>(Error.From(ErrorCode.InvalidCredentials, "password"));
 
         // Verify password
         if (!passwordHasher.Verify(request.Password, user.PasswordHash))
-            return Result.Failure<AuthTokensResponse>(Error.Create(ErrorCode.InvalidCredentials));
+            return Result.Failure<AuthTokensResponse>(Error.From(ErrorCode.InvalidCredentials, "password"));
 
         // Create refresh token
         string refreshTokenValue = jwtService.GenerateRefreshToken();
