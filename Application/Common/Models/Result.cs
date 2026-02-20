@@ -6,7 +6,7 @@ namespace Application.Common.Models;
 /// </summary>
 public class Result
 {
-    protected Result(bool isSuccess, Error error)
+    protected Result(bool isSuccess, Error error, int statusCode = 200)
     {
         if (isSuccess && error != Error.None)
             throw new InvalidOperationException("Success result cannot have an error.");
@@ -16,17 +16,25 @@ public class Result
 
         IsSuccess = isSuccess;
         Error = error;
+        StatusCode = statusCode;
     }
 
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
     public Error Error { get; }
 
-    public static Result Success() => new(true, Error.None);
+    /// <summary>
+    /// The HTTP status code for this result.
+    /// For successes: 200, 201, or 202. For failures: driven by <see cref="Error.StatusCode"/>.
+    /// </summary>
+    public int StatusCode { get; }
+
+    public static Result Success(int statusCode = 200) => new(true, Error.None, statusCode);
 
     public static Result Failure(Error error) => new(false, error);
 
-    public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
+    public static Result<TValue> Success<TValue>(TValue value, int statusCode = 200) =>
+        new(value, true, Error.None, statusCode);
 
     public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
 }
@@ -37,8 +45,8 @@ public class Result
 /// <typeparam name="TValue">The type of the value.</typeparam>
 public class Result<TValue> : Result
 {
-    protected internal Result(TValue? value, bool isSuccess, Error error)
-        : base(isSuccess, error)
+    protected internal Result(TValue? value, bool isSuccess, Error error, int statusCode = 200)
+        : base(isSuccess, error, statusCode)
     {
         Value = value;
     }

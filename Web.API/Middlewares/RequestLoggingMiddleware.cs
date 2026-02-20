@@ -37,9 +37,7 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
 
         // Log request
         if (logger.IsEnabled(LogLevel.Debug))
-        {
             LogRequest(context.Request);
-        }
 
         await next(context);
 
@@ -47,9 +45,7 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
 
         // Log response
         if (logger.IsEnabled(LogLevel.Debug))
-        {
             LogResponse(context.Response, stopwatch.ElapsedMilliseconds);
-        }
     }
 
     private void LogRequest(HttpRequest request)
@@ -75,9 +71,7 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
         var sanitized = new Dictionary<string, string>();
 
         foreach (KeyValuePair<string, StringValues> header in headers)
-        {
             sanitized[header.Key] = s_sensitiveHeaders.Contains(header.Key) ? "[REDACTED]" : header.Value.ToString();
-        }
 
         return sanitized;
     }

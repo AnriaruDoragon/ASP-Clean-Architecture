@@ -154,9 +154,9 @@ public class AuthController(ISender sender) : ControllerBase
     /// <summary>
     /// Initiates password reset process.
     /// </summary>
+    [Public]
     [HttpPost("[action]")]
     [EndpointSummary("Forgot password")]
-    [Public]
     [RateLimit("Auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -172,9 +172,9 @@ public class AuthController(ISender sender) : ControllerBase
     /// <summary>
     /// Resets password using a valid token.
     /// </summary>
+    [Public]
     [HttpPost("[action]")]
     [EndpointSummary("Reset password")]
-    [Public]
     [RateLimit("Auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ErrorProblemDetails>(StatusCodes.Status400BadRequest)]

@@ -14,7 +14,7 @@ public sealed record ValidationError : Error
     public IReadOnlyDictionary<string, FieldError[]> Errors { get; }
 
     private ValidationError(IReadOnlyDictionary<string, FieldError[]> errors)
-        : base(ErrorCode.ValidationFailed.ToString(), "One or more validation errors occurred.", 400)
+        : base(nameof(ErrorCode.ValidationFailed), "One or more validation errors occurred.", 400)
     {
         Errors = errors;
     }

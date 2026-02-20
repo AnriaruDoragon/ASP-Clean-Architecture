@@ -4,6 +4,7 @@ using Asp.Versioning.Conventions;
 using Common.ApiVersioning.Configs;
 using Common.ApiVersioning.OpenApi;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
@@ -28,7 +29,7 @@ namespace Common.ApiVersioning.Extensions;
 /// builder.Services.AddApiVersioningServices(builder.Configuration);
 ///
 /// // In Configure pipeline
-/// app.UseScalarApiReference();
+/// app.MapApiDocumentation();
 /// </code>
 /// </remarks>
 public static class ApiVersioningExtension
@@ -103,7 +104,7 @@ public static class ApiVersioningExtension
     /// <exception cref="InvalidOperationException">
     /// Thrown during validation if configuration is invalid (see <see cref="ApiVersionConfiguration.Validate"/>).
     /// </exception>
-    /// <seealso cref="UseScalarApiReference"/>
+    /// <seealso cref="MapApiDocumentation"/>
     /// <seealso cref="ApiVersionConfiguration"/>
     public static IServiceCollection AddApiVersioningServices(
         this IServiceCollection services,
@@ -186,11 +187,11 @@ public static class ApiVersioningExtension
     /// <summary>
     /// Maps OpenAPI document endpoints and configures Scalar API documentation UI.
     /// </summary>
-    /// <param name="app">The application builder to configure.</param>
-    /// <returns>The application builder for method chaining.</returns>
+    /// <param name="app">The endpoint route builder to configure.</param>
+    /// <returns>The endpoint route builder for method chaining.</returns>
     /// <remarks>
     /// <para>
-    /// This method sets up the middleware pipeline to server:
+    /// This method registers the following endpoints:
     /// </para>
     /// <list type="bullet">
     ///   <item>
@@ -222,7 +223,7 @@ public static class ApiVersioningExtension
     ///
     /// if (app.Environment.IsDevelopment())
     /// {
-    ///     app.UseScalarApiReference();
+    ///     app.MapApiDocumentation();
     /// }
     ///
     /// app.MapControllers();
@@ -234,34 +235,33 @@ public static class ApiVersioningExtension
     /// causing <see cref="ApiVersionConfiguration"/> to be unavailable in DI.
     /// </exception>
     /// <seealso cref="AddApiVersioningServices"/>
-    public static IApplicationBuilder UseScalarApiReference(this IApplicationBuilder app)
+    public static IEndpointRouteBuilder MapApiDocumentation(this IEndpointRouteBuilder app)
     {
-        return app.UseRouting()
-            .UseEndpoints(endpoints =>
+        ApiVersionConfiguration apiVersionConfiguration =
+            app.ServiceProvider.GetRequiredService<ApiVersionConfiguration>();
+
+        app.MapOpenApi().AllowAnonymous();
+
+        app.MapScalarApiReference(options =>
             {
-                ApiVersionConfiguration apiVersionConfiguration =
-                    app.ApplicationServices.GetRequiredService<ApiVersionConfiguration>();
+                ScalarConfiguration scalarConfiguration = apiVersionConfiguration.Scalar;
 
-                endpoints.MapOpenApi();
+                options.Title = scalarConfiguration.Title;
+                options.Theme = scalarConfiguration.Theme;
+                options.Layout = scalarConfiguration.Layout;
+                options.Servers = scalarConfiguration.Servers;
 
-                endpoints.MapScalarApiReference(options =>
-                {
-                    ScalarConfiguration scalarConfiguration = apiVersionConfiguration.Scalar;
+                options.AddDocuments(
+                    apiVersionConfiguration
+                        .Versions.OrderByDescending(v => v.MajorVersion)
+                        .ThenByDescending(v => v.MinorVersion)
+                        .ThenByDescending(v => v.PatchVersion)
+                        .Select(v => v.Name)
+                        .ToArray()
+                );
+            })
+            .AllowAnonymous();
 
-                    options.Title = scalarConfiguration.Title;
-                    options.Theme = scalarConfiguration.Theme;
-                    options.Layout = scalarConfiguration.Layout;
-                    options.Servers = scalarConfiguration.Servers;
-
-                    options.AddDocuments(
-                        apiVersionConfiguration
-                            .Versions.OrderByDescending(v => v.MajorVersion)
-                            .ThenByDescending(v => v.MinorVersion)
-                            .ThenByDescending(v => v.PatchVersion)
-                            .Select(v => v.Name)
-                            .ToArray()
-                    );
-                });
-            });
+        return app;
     }
 }

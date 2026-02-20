@@ -16,6 +16,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.env = .env
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{75DEBE8C-A64D-4B3E-B801-0ECB4A2E1B78}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		docs\adding-features.md = docs\adding-features.md
+		docs\architecture.md = docs\architecture.md
+		docs\authentication.md = docs\authentication.md
+		docs\configuration.md = docs\configuration.md
+		docs\deployment.md = docs\deployment.md
+		docs\error-handling.md = docs\error-handling.md
+		docs\getting-started.md = docs\getting-started.md
+	EndProjectSection
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.ApiVersioning", "Common.ApiVersioning\Common.ApiVersioning.csproj", "{5D0B3D2E-A229-47CB-94C6-F8696CE29355}"
 EndProject
 #if (IncludeTests)

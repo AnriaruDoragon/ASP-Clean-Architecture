@@ -55,6 +55,10 @@ public enum ErrorCode
 
     [ErrorInfo(409, "Email is already verified.")]
     EmailAlreadyVerified,
+
+    // Server errors (500)
+    [ErrorInfo(500, "An unexpected error occurred.")]
+    InternalServerError,
 }
 
 /// <summary>

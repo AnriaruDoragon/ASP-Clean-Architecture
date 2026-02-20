@@ -28,7 +28,7 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
 
         try
         {
-            TResponse response = await next();
+            TResponse response = await next(cancellationToken);
 
             stopwatch.Stop();
 

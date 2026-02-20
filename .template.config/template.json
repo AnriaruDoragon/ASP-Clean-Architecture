@@ -89,6 +89,14 @@
         "format": "D"
       }
     },
+    "guid11": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "75DEBE8C-A64D-4B3E-B801-0ECB4A2E1B78",
+      "parameters": {
+        "format": "D"
+      }
+    },
     "guid6": {
       "type": "generated",
       "generator": "guid",

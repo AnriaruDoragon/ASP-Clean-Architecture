@@ -13,15 +13,18 @@ public static class ResultExtensions
     /// Converts a Result to an appropriate IActionResult.
     /// </summary>
     public static IActionResult ToActionResult(this Result result) =>
-        result.IsSuccess ? new OkResult() : ToProblemDetails(result.Error);
+        result.IsSuccess ? ToSuccessResult(result.StatusCode) : ToProblemDetails(result.Error);
 
     extension<T>(Result<T> result)
     {
         /// <summary>
         /// Converts a Result&lt;T&gt; to an appropriate IActionResult.
+        /// Uses the status code carried by the result (200, 201, or 202).
         /// </summary>
         public IActionResult ToActionResult() =>
-            result.IsSuccess ? new OkObjectResult(result.Value) : ToProblemDetails(result.Error);
+            result.IsSuccess
+                ? new ObjectResult(result.Value) { StatusCode = result.StatusCode }
+                : ToProblemDetails(result.Error);
 
         /// <summary>
         /// Converts a Result&lt;T&gt; to an appropriate IActionResult with a custom success response.
@@ -30,14 +33,22 @@ public static class ResultExtensions
             result.IsSuccess ? onSuccess(result.Value) : ToProblemDetails(result.Error);
     }
 
+    private static IActionResult ToSuccessResult(int statusCode) =>
+        statusCode switch
+        {
+            201 => new StatusCodeResult(201),
+            202 => new StatusCodeResult(202),
+            _ => new OkResult(),
+        };
+
     private static ObjectResult ToProblemDetails(Error error)
     {
         _ = Enum.TryParse(error.Code, out ErrorCode errorCode);
 
         var problemDetails = new ErrorProblemDetails
         {
-            Type = GetTypeUri(error.StatusCode),
-            Title = GetTitle(error.StatusCode),
+            Type = ProblemDetailsHelper.GetTypeUri(error.StatusCode),
+            Title = ProblemDetailsHelper.GetTitle(error.StatusCode),
             Status = error.StatusCode,
             Detail = error.Description,
             ErrorCode = errorCode,
@@ -61,17 +72,13 @@ public static class ResultExtensions
         }
 
         // Copy any custom extensions from the Error to ProblemDetails
-        if (error.Extensions is not { Count: > 0 })
+        if (error.Extensions is { Count: > 0 })
         {
-            return new ObjectResult(problemDetails)
+            foreach ((string key, object? value) in error.Extensions)
             {
-                StatusCode = error.StatusCode,
-                ContentTypes = { "application/problem+json" },
-            };
+                problemDetails.Extensions[key] = value;
+            }
         }
-
-        foreach ((string key, object? value) in error.Extensions)
-            problemDetails.Extensions[key] = value;
 
         return new ObjectResult(problemDetails)
         {
@@ -79,27 +86,4 @@ public static class ResultExtensions
             ContentTypes = { "application/problem+json" },
         };
     }
-
-    private static string GetTitle(int statusCode) =>
-        statusCode switch
-        {
-            400 => "Bad Request",
-            401 => "Unauthorized",
-            403 => "Forbidden",
-            404 => "Not Found",
-            409 => "Conflict",
-            _ => "Error",
-        };
-
-    private static string GetTypeUri(int statusCode) =>
-        statusCode switch
-        {
-            400 => "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-            401 => "https://tools.ietf.org/html/rfc9110#section-15.5.2",
-            403 => "https://tools.ietf.org/html/rfc9110#section-15.5.4",
-            404 => "https://tools.ietf.org/html/rfc9110#section-15.5.5",
-            409 => "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-            500 => "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-            _ => "https://tools.ietf.org/html/rfc9110#section-15",
-        };
 }

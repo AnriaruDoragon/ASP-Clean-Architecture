@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -15,8 +16,7 @@ namespace Web.API.IntegrationTests;
 /// </summary>
 public class WebApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:18-alpine")
+    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("postgres:18-alpine")
         .WithDatabase("testdb")
         .WithUsername("postgres")
         .WithPassword("postgres")
@@ -57,6 +57,17 @@ public class WebApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             {
                 options.UseNpgsql(_dbContainer.GetConnectionString());
             });
+
+            // Replace the health check registered by AddInfrastructure (which captured the
+            // .env connection string) with one pointing at the Testcontainers database.
+            services.Configure<HealthCheckServiceOptions>(options =>
+            {
+                HealthCheckRegistration? existing = options.Registrations.FirstOrDefault(r => r.Name == "database");
+                if (existing != null)
+                    options.Registrations.Remove(existing);
+            });
+
+            services.AddHealthChecks().AddNpgSql(_dbContainer.GetConnectionString(), name: "database", tags: ["ready"]);
         });
 
         builder.UseEnvironment("Testing");

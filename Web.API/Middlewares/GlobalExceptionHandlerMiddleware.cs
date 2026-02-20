@@ -1,7 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Application.Common.Models;
 using Domain.Exceptions;
-using Microsoft.AspNetCore.Mvc;
+using Web.API.Models;
 
 namespace Web.API.Middlewares;
 
@@ -21,6 +22,20 @@ public class GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<Glob
         try
         {
             await next(context);
+
+            // Intercept bare 401/403 responses from auth middleware (no body written)
+            if (!context.Response.HasStarted && context.Response.ContentLength is null or 0)
+            {
+                switch (context.Response.StatusCode)
+                {
+                    case StatusCodes.Status401Unauthorized:
+                        await WriteErrorResponseAsync(context, ErrorCode.NotAuthenticated);
+                        break;
+                    case StatusCodes.Status403Forbidden:
+                        await WriteErrorResponseAsync(context, ErrorCode.Forbidden);
+                        break;
+                }
+            }
         }
         catch (Exception exception)
         {
@@ -31,24 +46,34 @@ public class GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<Glob
 
     private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        (int statusCode, string title) = exception switch
+        ErrorCode errorCode = exception switch
         {
-            NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
-            DomainException => (StatusCodes.Status400BadRequest, "Bad Request"),
-            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
-            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error"),
+            NotFoundException => ErrorCode.NotFound,
+            DomainException => ErrorCode.InternalServerError,
+            UnauthorizedAccessException => ErrorCode.Unauthorized,
+            _ => ErrorCode.InternalServerError,
         };
 
+        await WriteErrorResponseAsync(context, errorCode, exception.Message);
+    }
+
+    private static async Task WriteErrorResponseAsync(HttpContext context, ErrorCode errorCode, string? detail = null)
+    {
         string correlationId = context.Items["CorrelationId"]?.ToString() ?? context.TraceIdentifier;
+        int statusCode = errorCode.GetStatusCode();
 
-        var problemDetails = new ProblemDetails
+        var problemDetails = new ErrorProblemDetails
         {
+            Type = ProblemDetailsHelper.GetTypeUri(statusCode),
             Status = statusCode,
-            Title = title,
-            Detail = exception.Message,
+            Title = ProblemDetailsHelper.GetTitle(statusCode),
+            Detail = detail ?? errorCode.GetDefaultMessage(),
             Instance = context.Request.Path,
-            Extensions = { ["traceId"] = context.TraceIdentifier, ["correlationId"] = correlationId },
+            ErrorCode = errorCode,
         };
+
+        problemDetails.Extensions["traceId"] = context.TraceIdentifier;
+        problemDetails.Extensions["correlationId"] = correlationId;
 
         context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = statusCode;

@@ -103,16 +103,12 @@ public static class RateLimitingExtensions
 
                     // Skip if disabled
                     if (endpoint?.Metadata.GetMetadata<DisableRateLimitAttribute>() is not null)
-                    {
                         return RateLimitPartition.GetNoLimiter("disabled");
-                    }
 
                     // Get rate limit attribute
                     RateLimitAttribute? attr = endpoint?.Metadata.GetMetadata<RateLimitAttribute>();
                     if (attr is null)
-                    {
                         return RateLimitPartition.GetNoLimiter("no-limit");
-                    }
 
                     // Resolve limits (from policy name or custom values)
                     int limit;
@@ -120,11 +116,10 @@ public static class RateLimitingExtensions
 
                     if (!string.IsNullOrEmpty(attr.PolicyName))
                     {
-                        if (!settings.Policies.TryGetValue(attr.PolicyName, out var policy))
-                        {
-                            // Policy not found - use defaults
+                        // Policy not found - use defaults
+                        if (!settings.Policies.TryGetValue(attr.PolicyName, out PolicySettings? policy))
                             return RateLimitPartition.GetNoLimiter($"unknown-policy:{attr.PolicyName}");
-                        }
+
                         limit = policy.Limit;
                         window = policy.Window;
                     }

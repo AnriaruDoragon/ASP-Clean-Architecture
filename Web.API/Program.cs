@@ -67,12 +67,6 @@ app.UseRequestLogging();
 
 app.UseCors();
 
-if (app.Environment.IsDevelopment())
-{
-    // Enable Scalar UI for OpenApi
-    app.UseScalarApiReference();
-}
-
 // Conditional HTTPS based on configuration
 app.UseConditionalHttpsRedirection(app.Configuration);
 app.UseRateLimiter();
@@ -84,5 +78,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+if (app.Environment.IsDevelopment())
+{
+    // Enable Scalar UI for OpenApi
+    app.MapApiDocumentation();
+}
 
 app.Run();

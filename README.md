@@ -36,20 +36,20 @@ Most frameworks require you to opt *in* to authentication with `[Authorize]`. Fo
 
 ## What's Included
 
-| Feature | Why |
-|---|---|
-| **JWT auth with refresh tokens** | Stateless authentication with revocable sessions. Multi-device support out of the box. |
-| **CQRS with MediatR** | One handler per operation. Explicit dependencies. Easy to test. |
-| **FluentValidation pipeline** | Validation runs before the handler, automatically. You can't forget it. |
+| Feature                            | Why                                                                                                    |
+|------------------------------------|--------------------------------------------------------------------------------------------------------|
+| **JWT auth with refresh tokens**   | Stateless authentication with revocable sessions. Multi-device support out of the box.                 |
+| **CQRS with MediatR**              | One handler per operation. Explicit dependencies. Easy to test.                                        |
+| **FluentValidation pipeline**      | Validation runs before the handler, automatically. You can't forget it.                                |
 | **Result + ProblemDetails errors** | Typed error codes (`ErrorCode` enum) in RFC 7807 responses. Frontends can match on codes, not strings. |
-| **Rate limiting** | Per-IP, per-user, and per-session rate limiting. Configurable policies via `appsettings.json`. |
-| **Domain events** | Entities announce what happened. Handlers react. No coupling between the two. |
-| **API versioning** | Header-based versioning with per-version OpenAPI docs and lifecycle management. |
-| **Caching pipeline** | Implement `ICacheableQuery` on a query and it's cached. Memory or Redis backends. |
-| **Background jobs** | Fire-and-forget or queued jobs via `IBackgroundJobService`. Swap in Hangfire for production. |
-| **Health checks** | Liveness and readiness probes for orchestrators. Database connectivity included. |
-| **Structured logging** | Serilog with correlation IDs for distributed tracing. |
-| **Docker + Traefik** | Development stack with HTTPS via Traefik. Production stack with Nginx. |
+| **Rate limiting**                  | Per-IP, per-user, and per-session rate limiting. Configurable policies via `appsettings.json`.         |
+| **Domain events**                  | Entities announce what happened. Handlers react. No coupling between the two.                          |
+| **API versioning**                 | Header-based versioning with per-version OpenAPI docs and lifecycle management.                        |
+| **Caching pipeline**               | Implement `ICacheableQuery` on a query and it's cached. Memory or Redis backends.                      |
+| **Background jobs**                | Fire-and-forget or queued jobs via `IBackgroundJobService`. Swap in Hangfire for production.           |
+| **Health checks**                  | Liveness and readiness probes for orchestrators. Database connectivity included.                       |
+| **Structured logging**             | Serilog with correlation IDs for distributed tracing.                                                  |
+| **Docker + Traefik**               | Development stack with HTTPS via Traefik. Production stack with Nginx.                                 |
 
 ## Architecture
 
@@ -89,15 +89,15 @@ See [Getting Started](docs/getting-started.md) for detailed setup, template para
 
 ## Documentation
 
-| Guide | Description |
-|---|---|
-| [Getting Started](docs/getting-started.md) | Installation, template parameters, development setup, Docker commands |
-| [Architecture](docs/architecture.md) | Layer responsibilities, CQRS pattern, pipeline behaviors, Result pattern, domain events |
-| [Authentication](docs/authentication.md) | JWT setup, secure-by-default, auth endpoints, custom guards |
-| [Error Handling](docs/error-handling.md) | `Error.From()` pattern, `ErrorCode` enum, validation errors, ProblemDetails format |
-| [Deployment](docs/deployment.md) | Docker Compose production, VM/EC2 deployment, systemd service |
-| [Configuration](docs/configuration.md) | Environment variables, CORS, caching, rate limiting, background jobs, observability |
-| [Adding Features](docs/adding-features.md) | Step-by-step guide, Product CRUD example, file upload example |
+| Guide                                      | Description                                                                             |
+|--------------------------------------------|-----------------------------------------------------------------------------------------|
+| [Getting Started](docs/getting-started.md) | Installation, template parameters, development setup, Docker commands                   |
+| [Architecture](docs/architecture.md)       | Layer responsibilities, CQRS pattern, pipeline behaviors, Result pattern, domain events |
+| [Authentication](docs/authentication.md)   | JWT setup, secure-by-default, auth endpoints, custom guards                             |
+| [Error Handling](docs/error-handling.md)   | `Error.From()` pattern, `ErrorCode` enum, validation errors, ProblemDetails format      |
+| [Deployment](docs/deployment.md)           | Docker Compose production, VM/EC2 deployment, systemd service                           |
+| [Configuration](docs/configuration.md)     | Environment variables, CORS, caching, rate limiting, background jobs, observability     |
+| [Adding Features](docs/adding-features.md) | Step-by-step guide, Product CRUD example, file upload example                           |
 
 ## License
 

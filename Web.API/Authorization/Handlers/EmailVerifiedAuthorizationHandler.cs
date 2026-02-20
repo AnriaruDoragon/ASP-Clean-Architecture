@@ -38,12 +38,8 @@ public sealed class EmailVerifiedAuthorizationHandler(IServiceScopeFactory scope
             .FirstOrDefaultAsync();
 
         if (isEmailVerified)
-        {
             context.Succeed(requirement);
-        }
         else
-        {
             context.Fail();
-        }
     }
 }

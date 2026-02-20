@@ -12,9 +12,7 @@ public static class ConfigurationValidationExtensions
     {
         // Skip validation in Testing environment (integration tests configure their own services)
         if (app.Environment.EnvironmentName == "Testing")
-        {
             return app;
-        }
 
         IConfiguration configuration = app.Configuration;
         ILogger logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("ConfigurationValidation");
@@ -23,9 +21,7 @@ public static class ConfigurationValidationExtensions
         // Validate connection string
         string? connectionString = configuration.GetConnectionString("DefaultConnection");
         if (string.IsNullOrEmpty(connectionString))
-        {
             errors.Add("ConnectionStrings:DefaultConnection is required");
-        }
 
         // Validate JWT settings
         string? jwtSecretKey = configuration["Jwt:SecretKey"];
@@ -46,20 +42,14 @@ public static class ConfigurationValidationExtensions
 
         // Validate JWT issuer and audience
         if (string.IsNullOrEmpty(configuration["Jwt:Issuer"]))
-        {
             errors.Add("Jwt:Issuer is required");
-        }
 
         if (string.IsNullOrEmpty(configuration["Jwt:Audience"]))
-        {
             errors.Add("Jwt:Audience is required");
-        }
 
         // Log warnings for optional but recommended settings
         if (string.IsNullOrEmpty(configuration["Email:Host"]) || configuration.GetValue<bool>("Email:Enabled") == false)
-        {
             logger.LogInformation("Email service is not configured. Email functionality will be disabled.");
-        }
 
         // Check for development-only settings in production
         if (!app.Environment.IsDevelopment())
@@ -73,18 +63,14 @@ public static class ConfigurationValidationExtensions
             }
 
             if (configuration.GetValue<bool>("Telemetry:ConsoleExporter"))
-            {
                 logger.LogWarning("Telemetry ConsoleExporter is enabled in production. This may impact performance.");
-            }
         }
 
         // Throw if there are critical errors
         if (errors.Count > 0)
         {
             foreach (string error in errors)
-            {
                 logger.LogError("Configuration error: {Error}", error);
-            }
 
             throw new InvalidOperationException(
                 $"Configuration validation failed with {errors.Count} error(s). See logs for details."

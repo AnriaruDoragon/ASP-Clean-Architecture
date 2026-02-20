@@ -42,12 +42,8 @@ public sealed class RoleAuthorizationHandler(IServiceScopeFactory scopeFactory) 
 
         // Check if user has any of the required roles
         if (user.HasAnyRole(requirement.Roles))
-        {
             context.Succeed(requirement);
-        }
         else
-        {
             context.Fail();
-        }
     }
 }

@@ -26,7 +26,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
         // Only cache if the request implements ICacheableQuery
         if (request is not ICacheableQuery cacheableQuery)
         {
-            return await next();
+            return await next(cancellationToken);
         }
 
         string cacheKey = cacheableQuery.CacheKey;

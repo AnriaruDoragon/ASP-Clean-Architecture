@@ -16,9 +16,7 @@ public static class HttpsExtensions
         bool enforceHttps = configuration.GetValue("Security:EnforceHttps", true);
 
         if (enforceHttps)
-        {
             app.UseHttpsRedirection();
-        }
 
         return app;
     }

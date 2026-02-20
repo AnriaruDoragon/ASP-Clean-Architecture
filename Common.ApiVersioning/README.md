@@ -45,7 +45,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     // Enable Scalar UI (can be used outside of this block if you want API docs to be public) 
-    app.UseScalarApiReference();
+    app.MapApiDocumentation();
 }
 
 app.UseHttpsRedirection();
@@ -479,7 +479,7 @@ Only one version can have Active or Current status. Use Legacy for older support
 
 ### Scalar UI not showing
 
-- Verify `UseScalarApiReference()` is called
+- Verify `MapApiDocumentation()` is called
 - Check that `/openapi/{version}.json` endpoints are accessible
 - Ensure `AddApiVersioningServices()` was called first
 

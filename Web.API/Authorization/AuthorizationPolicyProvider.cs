@@ -17,10 +17,10 @@ public sealed class AuthorizationPolicyProvider(IOptions<AuthorizationOptions> o
         if (policyName.StartsWith(RequireRoleAttribute.PolicyPrefix))
         {
             string rolesString = policyName[RequireRoleAttribute.PolicyPrefix.Length..];
-            Role[] roles = rolesString
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(r => (Role)int.Parse(r))
-                .ToArray();
+            Role[] roles =
+            [
+                .. rolesString.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(r => (Role)int.Parse(r)),
+            ];
 
             AuthorizationPolicy policy = new AuthorizationPolicyBuilder()
                 .AddRequirements(new RoleRequirement(roles))
